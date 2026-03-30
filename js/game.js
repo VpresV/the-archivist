@@ -124,14 +124,14 @@ function getAudioContext() {
     return audioCtx;
 }
 
-// Lore sound — papyrus unrolling, dry rustling paper with a faint resonance.
+// Lore sound — aged papyrus slowly unrolling, soft and dry.
 function playLoreSound() {
     if (!soundEnabled) return;
     try {
         const ctx = getAudioContext();
 
-        // Layer 1: dry noise burst — the papyrus rustling.
-        const bufferSize = ctx.sampleRate * 0.4;
+        // Noise layer — softer, lower frequency, slower attack.
+        const bufferSize = ctx.sampleRate * 0.6;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -141,40 +141,41 @@ function playLoreSound() {
         const noiseSource = ctx.createBufferSource();
         noiseSource.buffer = buffer;
 
+        // Lower frequency bandpass — more like old parchment than crisp paper.
         const noiseFilter = ctx.createBiquadFilter();
         noiseFilter.type = "bandpass";
-        noiseFilter.frequency.value = 2000;
-        noiseFilter.Q.value = 0.5;
+        noiseFilter.frequency.value = 800;
+        noiseFilter.Q.value = 0.4;
 
         const noiseGain = ctx.createGain();
         noiseGain.gain.setValueAtTime(0.001, ctx.currentTime);
-        noiseGain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
-        noiseGain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.15);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        noiseGain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.15);
+        noiseGain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.35);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
 
         noiseSource.connect(noiseFilter);
         noiseFilter.connect(noiseGain);
         noiseGain.connect(ctx.destination);
 
-        // Layer 2: faint low resonance — the weight of the document.
+        // Resonance layer — deeper and quieter.
         const resonator = ctx.createOscillator();
         const resGain = ctx.createGain();
 
         resonator.type = "sine";
-        resonator.frequency.setValueAtTime(90, ctx.currentTime);
-        resonator.frequency.exponentialRampToValueAtTime(70, ctx.currentTime + 0.6);
+        resonator.frequency.setValueAtTime(65, ctx.currentTime);
+        resonator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.8);
 
         resGain.gain.setValueAtTime(0.001, ctx.currentTime);
-        resGain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.1);
-        resGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        resGain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.2);
+        resGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
 
         resonator.connect(resGain);
         resGain.connect(ctx.destination);
 
         noiseSource.start(ctx.currentTime);
-        noiseSource.stop(ctx.currentTime + 0.4);
+        noiseSource.stop(ctx.currentTime + 0.6);
         resonator.start(ctx.currentTime);
-        resonator.stop(ctx.currentTime + 0.6);
+        resonator.stop(ctx.currentTime + 0.8);
 
     } catch (e) {}
 }
