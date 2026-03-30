@@ -224,6 +224,7 @@ body {
     cursor: pointer;
     letter-spacing: 1px;
     transition: all 0.2s ease;
+    margin-bottom: 8px;
 }
 
 #save-btn:hover {
