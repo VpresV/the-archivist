@@ -52,6 +52,20 @@ body {
     font-size: 1.6rem;
 }
 
+/* Archivist's Mark */
+#archivist-mark {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    color: #e8c87a;
+    letter-spacing: 3px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+#archivist-mark span {
+    font-style: italic;
+}
+
 #click-btn {
     background: linear-gradient(145deg, #1a0f00, #2d1a00);
     color: #e8c87a;
@@ -208,12 +222,25 @@ body {
     font-weight: 600;
 }
 
-/* Next unlock hint */
 #next-unlock-info {
     font-size: 0.85rem;
     color: #5a3e1b;
     font-style: italic;
     letter-spacing: 1px;
+}
+
+/* Ritual hint */
+#ritual-hint {
+    font-size: 0.9rem;
+    color: #8a3a3a;
+    font-style: italic;
+    letter-spacing: 2px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
 
 /* Action buttons row */
@@ -269,6 +296,7 @@ body {
     transition: opacity 0.5s ease;
     margin-top: 4px;
     min-height: 1.2em;
+    cursor: default;
 }
 
 #save-indicator.visible {
@@ -296,6 +324,31 @@ body {
 }
 
 #prestige-btn:active {
+    transform: translateY(1px);
+}
+
+/* Ritual button */
+#ritual-btn {
+    background: linear-gradient(145deg, #0a001a, #1a0030);
+    color: #c87ae8;
+    border: 1px solid #5a1b8a;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    padding: 14px 32px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 15px rgba(150, 50, 200, 0.1);
+}
+
+#ritual-btn:hover {
+    background: linear-gradient(145deg, #1a0030, #2d0050);
+    box-shadow: 0 0 25px rgba(150, 50, 200, 0.3);
+    color: #e8aaff;
+    transform: translateY(-1px);
+}
+
+#ritual-btn:active {
     transform: translateY(1px);
 }
 
@@ -362,14 +415,14 @@ body {
     font-style: normal;
 }
 
-/* Support overlay */
-#support-overlay {
+/* Overlay screens — shared base styles */
+.overlay-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.92);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -377,87 +430,22 @@ body {
     opacity: 0;
     transition: opacity 0.6s ease;
     pointer-events: none;
+    overflow-y: auto;
+    padding: 20px;
 }
 
-#support-overlay.visible {
+.overlay-screen.visible {
     opacity: 1;
     pointer-events: auto;
 }
 
-#support-overlay-box {
-    max-width: 540px;
-    width: 90%;
+.overlay-box {
+    max-width: 580px;
+    width: 100%;
     border: 1px solid #5a3e1b;
     background: linear-gradient(145deg, #0d0800, #1a0f00);
     padding: 36px 40px;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    box-shadow: 0 0 60px rgba(200, 150, 50, 0.1);
-}
-
-#support-overlay-title {
-    font-family: 'Cinzel Decorative', cursive;
-    font-size: 1.2rem;
-    color: #e8c87a;
-    letter-spacing: 3px;
-    text-align: center;
-}
-
-#support-overlay-text {
-    font-family: 'Crimson Text', serif;
-    font-size: 1.05rem;
-    color: #a08050;
-    line-height: 1.9;
-    font-style: italic;
-    text-align: center;
-}
-
-#support-overlay-text em {
-    color: #e8c87a;
-    font-style: normal;
-}
-
-#support-overlay-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-#support-proceed-btn {
-    background: linear-gradient(145deg, #1a0f00, #2d1a00);
-    color: #e8c87a;
-    border: 1px solid #5a3e1b;
-    font-family: 'Crimson Text', serif;
-    font-size: 1rem;
-    padding: 10px 24px;
-    cursor: pointer;
-    letter-spacing: 2px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    display: inline-block;
-}
-
-#support-proceed-btn:hover {
-    background: linear-gradient(145deg, #2d1a00, #4a2e00);
-    color: #fff5d6;
-    box-shadow: 0 0 20px rgba(200, 150, 50, 0.2);
-}
-
-#support-dismiss-btn {
-    background: transparent;
-    color: #6b5030;
-    border: 1px solid #3a2a10;
-    font-family: 'Crimson Text', serif;
-    font-size: 1rem;
-    padding: 10px 24px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.2s ease;
-}
-
-#support-dismiss-btn:hover {
-    color: #c9a96e;
-    border-color: #5a3e1b;
-}
+    box-shadow: 0 0 60px rgba(200, 150, 50,
