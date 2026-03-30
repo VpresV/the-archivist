@@ -639,9 +639,9 @@ body {
 #ngplus-indicator {
     font-family: 'Crimson Text', serif;
     font-size: 0.8rem;
-    color: #5a3e1b;
+    color: #8a3a3a;
     letter-spacing: 3px;
     text-align: center;
     font-style: italic;
-    opacity: 0.7;
+    opacity: 0.8;
 }
