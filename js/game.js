@@ -701,35 +701,33 @@ async function triggerCodexLore() {
 }
 
 // --- STATUS INDICATOR RENDERER ---
-// Merges Mark and NG+ indicators into a single line below the title.
 function renderStatusIndicator() {
-    let indicator = document.getElementById("status-indicator");
-
-    const hasMark = state.hollowKingRewards.mark;
-    const hasNgPlus = state.ngPlus;
-
-    if (!hasMark && !hasNgPlus) return;
-
-    if (!indicator) {
-        indicator = document.createElement("div");
-        indicator.id = "status-indicator";
-        const title = document.getElementById("game-title");
-        if (title && title.nextSibling) {
-            document.getElementById("game-container").insertBefore(indicator, title.nextSibling);
-        } else {
-            document.getElementById("game-container").appendChild(indicator);
+    // Mark — gold achievement badge below the title.
+    if (state.hollowKingRewards.mark) {
+        let mark = document.getElementById("mark-indicator");
+        if (!mark) {
+            mark = document.createElement("div");
+            mark.id = "mark-indicator";
+            mark.textContent = "✦ Marked by the Archive ✦";
+            const knowledgeDisplay = document.getElementById("knowledge-display");
+            if (knowledgeDisplay) {
+                document.getElementById("game-container").insertBefore(mark, knowledgeDisplay);
+            }
         }
     }
 
-    if (hasMark && hasNgPlus) {
-        indicator.textContent = "✦ Marked. It Did Not Stay Closed ✦";
-        indicator.className = "status-indicator-ngplus";
-    } else if (hasNgPlus) {
-        indicator.textContent = "✦ It Did Not Stay Closed ✦";
-        indicator.className = "status-indicator-ngplus";
-    } else if (hasMark) {
-        indicator.textContent = "✦ Marked by the Archive ✦";
-        indicator.className = "status-indicator-mark";
+    // NG+ warning — dark red dread, below the mark.
+    if (state.ngPlus) {
+        let ngplus = document.getElementById("ngplus-indicator");
+        if (!ngplus) {
+            ngplus = document.createElement("div");
+            ngplus.id = "ngplus-indicator";
+            ngplus.textContent = "It Did Not Stay Closed";
+            const knowledgeDisplay = document.getElementById("knowledge-display");
+            if (knowledgeDisplay) {
+                document.getElementById("game-container").insertBefore(ngplus, knowledgeDisplay);
+            }
+        }
     }
 }
 
