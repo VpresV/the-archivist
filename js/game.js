@@ -237,13 +237,19 @@ function renderPrestige() {
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
 
+    const canPrestige = state.knowledge >= threshold;
+    const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
+
     container.innerHTML = `
         <div id="prestige-info">
             Descent level: <span>${count}</span> &nbsp;|&nbsp;
             Knowledge multiplier: <span>${bonus.toFixed(1)}x</span>
         </div>
+        <button id="save-btn">Save Progress</button>
         ${canPrestige ? `<button id="prestige-btn">Descend Deeper (next bonus: ${nextBonus}%)</button>` : ""}
     `;
+
+    document.getElementById("save-btn").onclick = saveGame;
 
     if (canPrestige) {
         document.getElementById("prestige-btn").onclick = doPrestige;
@@ -274,6 +280,9 @@ function doPrestige() {
     triggerPrestigeLore(state.prestige.count);
 
     updateDisplay();
+    
+    // Save immediately after prestige so the descent level is never lost.
+    saveGame();
 }
 
 // --- PRESTIGE LORE ---
@@ -297,6 +306,46 @@ async function triggerPrestigeLore(descentLevel) {
         console.log("Prestige lore generation failed:", err);
     }
 }
+
+// --- SAVE SYSTEM ---
+// Saves the entire game state to localStorage as a JSON string.
+// localStorage can only store strings, so we serialize with JSON.stringify.
+function saveGame() {
+    const saveData = {
+        knowledge: state.knowledge,
+        knowledgePerClick: state.knowledgePerClick,
+        knowledgePerSecond: state.knowledgePerSecond,
+        totalEarned: state.totalEarned,
+        upgrades: state.upgrades,
+        prestige: state.prestige,
+        milestonesReached: Array.from(milestonesReached)
+    };
+    localStorage.setItem("archivist_save", JSON.stringify(saveData));
+    showSaveIndicator();
+}
+
+// --- LOAD SYSTEM ---
+// Loads saved data from localStorage on startup.
+// If no save exists, the game starts fresh.
+function loadGame() {
+    const raw = localStorage.getItem("archivist_save");
+    if (!raw) return;
+
+    try {
+        const saved = JSON.parse(raw);
+
+        state.knowledge = saved.knowledge || 0;
+        state.knowledgePerClick = saved.knowledgePerClick || 1;
+        state.knowledgePerSecond = saved.knowledgePerSecond || 0;
+        state.totalEarned = saved.totalEarned || 0;
+        state.upgrades = saved.upgrades || state.upgrades;
+        state.prestige = saved.prestige || state.prestige;
+
+        // Restore milestones so lore doesn't fire again for already-seen ones.
+        if (saved.milestonesReached) {
+            saved.milestonesReached.forEach(m =
 // --- INIT ---
 // Starts the game by rendering the initial state.
+// Load any existing save, then render the initial state.
+loadGame();
 updateDisplay();
