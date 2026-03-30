@@ -731,7 +731,22 @@ function showTrueEnding() {
     fadeIn(overlay);
 
     document.getElementById("ending-close-btn").onclick = () => {
+        // Preserve Hollow King rewards across the true ending reset.
+        const preservedRewards = { ...state.hollowKingRewards };
+        const preservedKpc = state.knowledgePerClick;
+        const preservedBonus = state.prestige.bonus;
+
         localStorage.clear();
+
+        // Write preserved rewards back before reloading.
+        const preserved = {
+            hollowKingRewards: preservedRewards,
+            // Restore Mark bonus if claimed.
+            knowledgePerClick: preservedKpc,
+            // Restore Gift multiplier if claimed.
+            prestige: { count: 0, bonus: preservedBonus, threshold: 10000 }
+        };
+        localStorage.setItem("archivist_preserved", JSON.stringify(preserved));
         location.reload();
     };
 }
@@ -791,6 +806,20 @@ function saveGame() {
 
 // --- LOAD SYSTEM ---
 function loadGame() {
+    // Check for preserved rewards from a true ending reset.
+    const preservedRaw = localStorage.getItem("archivist_preserved");
+    if (preservedRaw) {
+        try {
+            const preserved = JSON.parse(preservedRaw);
+            state.hollowKingRewards = preserved.hollowKingRewards || state.hollowKingRewards;
+            state.knowledgePerClick = preserved.knowledgePerClick || 1;
+            state.prestige.bonus = preserved.prestige.bonus || 1.0;
+            localStorage.removeItem("archivist_preserved");
+            saveGame();
+        } catch (e) {
+            localStorage.removeItem("archivist_preserved");
+        }
+    }
     const raw = localStorage.getItem("archivist_save");
     if (!raw) return;
     try {
