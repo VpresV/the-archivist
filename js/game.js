@@ -106,12 +106,93 @@ const fpsEl = document.getElementById("fps");
 const clickBtn = document.getElementById("click-btn");
 
 // --- NUMBER FORMATTER ---
-// Converts large numbers to readable shorthand.
 function formatNumber(n) {
     if (n >= 1000000000) return (n / 1000000000).toFixed(1) + "B";
     if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
     if (n >= 1000) return (n / 1000).toFixed(1) + "K";
     return Math.floor(n).toString();
+}
+
+// --- SOUND SYSTEM ---
+let audioCtx = null;
+let soundEnabled = false;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+}
+
+// Click sound — soft low thud, like a heavy book closing.
+function playClickSound() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(120, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.1);
+
+        gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.15);
+    } catch (e) {}
+}
+
+// Lore sound — slow deep resonant hum, like something waking.
+function playLoreSound() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(80, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 1.5);
+
+        gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.3);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 1.5);
+    } catch (e) {}
+}
+
+// Prestige sound — descending tone, like falling into darkness.
+function playPrestigeSound() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 1.8);
+
+        gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.2);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 1.8);
+    } catch (e) {}
 }
 
 // --- CLICK HANDLER ---
@@ -123,6 +204,7 @@ clickBtn.addEventListener("click", (e) => {
     checkMilestones();
     spawnFloatNumber(e, gained);
     spawnRipple(e);
+    playClickSound();
 });
 
 // --- PASSIVE INCOME LOOP ---
@@ -272,6 +354,8 @@ function showLore(title, text) {
     document.getElementById("lore-title").textContent = cleanTitle;
     document.getElementById("lore-text").textContent = cleanText;
 
+    playLoreSound();
+
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             panel.classList.add("visible");
@@ -327,6 +411,7 @@ function renderPrestige() {
             <div id="action-buttons">
                 <button id="save-btn">✦ Save Progress</button>
                 <button id="kofi-btn">Support the Archive</button>
+                <button id="sound-btn">Sound: Off</button>
             </div>
             <div id="save-indicator"></div>
             <button id="prestige-btn" style="display:none;">Descend Deeper</button>
@@ -339,6 +424,7 @@ function renderPrestige() {
         document.getElementById("prestige-btn").onclick = doPrestige;
         document.getElementById("kofi-btn").onclick = showSupportOverlay;
         document.getElementById("ritual-btn").onclick = showRitualOverlay;
+        document.getElementById("sound-btn").onclick = toggleSound;
         prestigeBuilt = true;
     }
 
@@ -364,10 +450,15 @@ function renderPrestige() {
 
     const ritualBtn = document.getElementById("ritual-btn");
     ritualBtn.style.display = state.ritualAvailable ? "inline-block" : "none";
+
+    // Sync sound button label with current state.
+    const soundBtn = document.getElementById("sound-btn");
+    if (soundBtn) soundBtn.textContent = soundEnabled ? "Sound: On" : "Sound: Off";
 }
 
 // --- PRESTIGE ACTION ---
 function doPrestige() {
+    playPrestigeSound();
     state.prestige.count++;
     state.prestige.bonus += 0.5;
     state.prestige.threshold = Math.floor(state.prestige.threshold * 2.5);
@@ -895,6 +986,9 @@ function loadGame() {
             saved.milestonesReached.forEach(m => milestonesReached.add(m));
         }
 
+        // Restore sound preference.
+        soundEnabled = localStorage.getItem("archivist_sound") === "1";
+
         recalculateKps();
     } catch (err) {
         console.log("Save data corrupted, starting fresh:", err);
@@ -934,6 +1028,17 @@ function confirmReset() {
     }, 5000);
 }
 
+// --- SOUND TOGGLE ---
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById("sound-btn");
+    if (btn) btn.textContent = soundEnabled ? "Sound: On" : "Sound: Off";
+    if (soundEnabled && audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+    localStorage.setItem("archivist_sound", soundEnabled ? "1" : "0");
+}
+
 // --- AUTOSAVE ---
 setInterval(saveGame, 30000);
 
@@ -949,8 +1054,6 @@ function spawnFloatNumber(e, amount) {
 }
 
 // --- CLICK ANIMATION: GLOW PULSE ---
-// Briefly intensifies the button glow on click.
-// More atmospheric than a ripple for a dark parchment game.
 function spawnRipple(e) {
     const btn = document.getElementById("click-btn");
     btn.classList.add("clicked");
