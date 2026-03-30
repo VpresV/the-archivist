@@ -212,3 +212,35 @@ body {
 #prestige-btn:active {
     transform: translateY(1px);
 }
+
+/* Save system UI */
+#save-btn {
+    background: transparent;
+    color: #6b5030;
+    border: 1px solid #3a2a10;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    padding: 8px 20px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+#save-btn:hover {
+    color: #c9a96e;
+    border-color: #5a3e1b;
+}
+
+#save-indicator {
+    font-size: 0.85rem;
+    color: #6b5030;
+    letter-spacing: 2px;
+    font-style: italic;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    margin-top: 4px;
+}
+
+#save-indicator.visible {
+    opacity: 1;
+}
