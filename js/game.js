@@ -27,7 +27,10 @@ const state = {
         gift: false
     },
     ritualAvailable: false,
-    endingSeen: false
+    endingSeen: false,
+    ngPlus: false,
+    // Baseline kps from Codex NG+ reward.
+    baselineKps: 0
 };
 
 // --- UPGRADE DEFINITIONS ---
@@ -114,8 +117,10 @@ clickBtn.addEventListener("click", () => {
 
 // --- PASSIVE INCOME LOOP ---
 setInterval(() => {
-    if (state.knowledgePerSecond > 0) {
-        const gained = state.knowledgePerSecond * state.prestige.bonus;
+    // Include baseline kps from Codex NG+ reward.
+    const total = state.knowledgePerSecond + state.baselineKps;
+    if (total > 0) {
+        const gained = total * state.prestige.bonus;
         state.knowledge += gained;
         state.totalEarned += gained;
         updateDisplay();
@@ -126,17 +131,20 @@ setInterval(() => {
 // --- DISPLAY UPDATE ---
 function updateDisplay() {
     knowledgeCountEl.textContent = Math.floor(state.knowledge);
-    const kps = state.knowledgePerSecond * (state.prestige.bonus || 1);
+    const kps = (state.knowledgePerSecond + state.baselineKps) * (state.prestige.bonus || 1);
     fpsEl.textContent = isNaN(kps) ? "0.0" : kps.toFixed(1);
     renderUpgrades();
     renderPrestige();
     renderMark();
+    renderNgPlusIndicator();
 }
 
 // --- UPGRADE COST CALCULATOR ---
+// In NG+ all upgrade costs are 50% higher.
 function getUpgradeCost(def) {
     const owned = state.upgrades[def.id] || 0;
-    return Math.floor(def.baseCost * Math.pow(1.15, owned));
+    const base = state.ngPlus ? Math.floor(def.baseCost * 1.5) : def.baseCost;
+    return Math.floor(base * Math.pow(1.15, owned));
 }
 
 // --- UPGRADE AVAILABILITY CHECK ---
@@ -274,7 +282,8 @@ async function triggerLoreEvent(milestone) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 milestone: milestone,
-                upgrades: state.upgrades
+                upgrades: state.upgrades,
+                ngPlus: state.ngPlus
             })
         });
         const data = await response.json();
@@ -357,7 +366,7 @@ function doPrestige() {
     state.prestige.threshold = Math.floor(state.prestige.threshold * 2.5);
 
     state.knowledge = 0;
-    state.knowledgePerClick = state.hollowKingRewards.mark ? 2 : 1;
+    state.knowledgePerClick = state.hollowKingRewards.mark ? (state.ngPlus ? 3 : 2) : 1;
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
 
@@ -369,8 +378,10 @@ function doPrestige() {
     upgradesBuilt = false;
     state.ritualAvailable = false;
 
-    // After descent 5, 30% chance ritual becomes available.
-    if (state.prestige.count > 5) {
+    // Ritual unlock threshold — descent 8 in NG+, descent 5 normally.
+    const ritualUnlockThreshold = state.ngPlus ? 8 : 5;
+
+    if (state.prestige.count > ritualUnlockThreshold) {
         const allRewardsClaimed = state.hollowKingRewards.codex &&
             state.hollowKingRewards.mark &&
             state.hollowKingRewards.gift;
@@ -401,7 +412,7 @@ async function triggerPrestigeLore(descentLevel) {
             body: JSON.stringify({
                 milestone: `prestige_${descentLevel}`,
                 upgrades: state.upgrades,
-                context: `The player has just descended to archive level ${descentLevel}. This is a prestige event. Write a darker, more unsettling fragment than before. The archive is pulling them deeper.`
+                context: `The player has just descended to archive level ${descentLevel}. This is a prestige event. Write a darker, more unsettling fragment than before. The archive is pulling them deeper.${state.ngPlus ? " This is a New Game+ run — the archive is more malevolent and ancient than before." : ""}`
             })
         });
         const data = await response.json();
@@ -456,7 +467,9 @@ function showRitualOverlay() {
 function showBanishmentOverlay() {
     removeOverlay("banishment-overlay");
 
-    const requiredClicks = 50 + (state.prestige.count * 10);
+    // NG+ requires 50% more clicks to banish.
+    const baseClicks = 50 + (state.prestige.count * 10);
+    const requiredClicks = state.ngPlus ? Math.floor(baseClicks * 1.5) : baseClicks;
     let currentClicks = 0;
     let timeLeft = 30;
     let timerInterval = null;
@@ -558,7 +571,10 @@ function showVictoryOverlay() {
         rewardButtons.push(`
             <button class="reward-btn" id="reward-codex">
                 <strong>The Forbidden Codex</strong><br/>
-                <small>A final page surfaces from the deepest vault. Some truths cannot be unlearned.</small>
+                <small>${state.ngPlus
+                    ? "A final page surfaces. Some truths cannot be unlearned. The archive whispers constantly now."
+                    : "A final page surfaces from the deepest vault. Some truths cannot be unlearned."
+                }</small>
             </button>
         `);
     }
@@ -566,7 +582,10 @@ function showVictoryOverlay() {
         rewardButtons.push(`
             <button class="reward-btn" id="reward-mark">
                 <strong>The Archivist's Mark</strong><br/>
-                <small>Your name is written in the archive's oldest ink. It will not fade. Each fragment you recover carries more weight.</small>
+                <small>${state.ngPlus
+                    ? "Your name is written deeper this time. Each fragment carries twice the weight."
+                    : "Your name is written in the archive's oldest ink. It will not fade. Each fragment you recover carries more weight."
+                }</small>
             </button>
         `);
     }
@@ -574,7 +593,10 @@ function showVictoryOverlay() {
         rewardButtons.push(`
             <button class="reward-btn" id="reward-gift">
                 <strong>The Hollow Gift</strong><br/>
-                <small>Something of the King remains in you. The fragments come faster now.</small>
+                <small>${state.ngPlus
+                    ? "The King left more of himself this time. Far more. The fragments come faster than they should."
+                    : "Something of the King remains in you. The fragments come faster now."
+                }</small>
             </button>
         `);
     }
@@ -631,27 +653,36 @@ function claimReward(rewardId) {
     state.hollowKingRewards[rewardId] = true;
     state.ritualAvailable = false;
 
-    // Apply reward effects.
+    // Apply reward effects — NG+ rewards are stronger.
     if (rewardId === "gift") {
-        state.prestige.bonus *= 3;
+        state.prestige.bonus *= state.ngPlus ? 5 : 3;
     }
     if (rewardId === "mark") {
-        state.knowledgePerClick += 1;
+        state.knowledgePerClick += state.ngPlus ? 2 : 1;
+    }
+    if (rewardId === "codex" && state.ngPlus) {
+        state.baselineKps += 0.5;
     }
 
-    // Close the victory overlay first, then trigger effects.
     removeOverlay("victory-overlay");
     saveGame();
     updateDisplay();
 
-    // Small delay so the overlay is gone before lore appears.
     setTimeout(() => {
         if (rewardId === "codex") {
             triggerCodexLore();
         } else if (rewardId === "mark") {
-            showLore("The Archivist's Mark", "Your name has been written in ink older than language. The archive will not forget you. Something in the dark nods slowly, as if satisfied.");
+            showLore("The Archivist's Mark",
+                state.ngPlus
+                    ? "The second mark burns deeper than the first. Your name is now written in two inks — one ancient, one something else entirely. The fragments feel heavier now. More real."
+                    : "Your name has been written in ink older than language. The archive will not forget you. Something in the dark nods slowly, as if satisfied."
+            );
         } else if (rewardId === "gift") {
-            showLore("The Hollow Gift", "The King left a splinter of himself behind. It settled somewhere behind your eyes. The fragments come faster now — as if they were always yours to begin with.");
+            showLore("The Hollow Gift",
+                state.ngPlus
+                    ? "He left far more of himself this time. It doesn't settle behind your eyes — it settles everywhere. The archive and you are no longer separate things."
+                    : "The King left a splinter of himself behind. It settled somewhere behind your eyes. The fragments come faster now — as if they were always yours to begin with."
+            );
         }
     }, 400);
 }
@@ -665,7 +696,9 @@ async function triggerCodexLore() {
             body: JSON.stringify({
                 milestone: "hollow_king_codex",
                 upgrades: state.upgrades,
-                context: "The player has just defeated the Hollow King and claimed the Forbidden Codex. Write the darkest, most profound lore fragment in the entire game. This is a revelation — something that recontextualizes everything that came before. Ancient, unsettling, final."
+                context: state.ngPlus
+                    ? "The player has defeated the Hollow King in New Game+ and claimed the Forbidden Codex for the second time. Write something that suggests the archive was never truly closed — that the first ending was itself a page in a larger book. Deeply unsettling, ancient, final in a different way."
+                    : "The player has just defeated the Hollow King and claimed the Forbidden Codex. Write the darkest, most profound lore fragment in the entire game. This is a revelation — something that recontextualizes everything that came before. Ancient, unsettling, final."
             })
         });
         const data = await response.json();
@@ -691,6 +724,25 @@ function renderMark() {
         document.getElementById("game-container").insertBefore(mark, knowledgeDisplay);
     } else {
         document.getElementById("game-container").appendChild(mark);
+    }
+}
+
+// --- NG+ INDICATOR RENDERER ---
+function renderNgPlusIndicator() {
+    if (!state.ngPlus) return;
+
+    let indicator = document.getElementById("ngplus-indicator");
+    if (indicator) return;
+
+    indicator = document.createElement("div");
+    indicator.id = "ngplus-indicator";
+    indicator.textContent = "⟳ Second Archive";
+
+    const title = document.getElementById("game-title");
+    if (title && title.nextSibling) {
+        document.getElementById("game-container").insertBefore(indicator, title.nextSibling);
+    } else {
+        document.getElementById("game-container").appendChild(indicator);
     }
 }
 
@@ -723,6 +775,7 @@ function showTrueEnding() {
             </div>
             <div class="overlay-buttons">
                 <button id="ending-close-btn">Close the Archive</button>
+                <button id="ending-ngplus-btn">What Lies Below Awakens</button>
             </div>
         </div>
     `;
@@ -730,22 +783,22 @@ function showTrueEnding() {
     document.body.appendChild(overlay);
     fadeIn(overlay);
 
+    // Close the Archive — total wipe, fresh start.
     document.getElementById("ending-close-btn").onclick = () => {
-        // Preserve Hollow King rewards across the true ending reset.
-        const preservedRewards = { ...state.hollowKingRewards };
-        const preservedKpc = state.knowledgePerClick;
-        const preservedBonus = state.prestige.bonus;
-
         localStorage.clear();
+        location.reload();
+    };
 
-        // Write preserved rewards back before reloading.
+    // What Lies Below Awakens — New Game+ with preserved rewards.
+    document.getElementById("ending-ngplus-btn").onclick = () => {
         const preserved = {
-            hollowKingRewards: preservedRewards,
-            // Restore Mark bonus if claimed.
-            knowledgePerClick: preservedKpc,
-            // Restore Gift multiplier if claimed.
-            prestige: { count: 0, bonus: preservedBonus, threshold: 10000 }
+            hollowKingRewards: { ...state.hollowKingRewards },
+            knowledgePerClick: state.knowledgePerClick,
+            prestige: { count: 0, bonus: state.prestige.bonus, threshold: 25000 },
+            baselineKps: state.baselineKps,
+            ngPlus: true
         };
+        localStorage.clear();
         localStorage.setItem("archivist_preserved", JSON.stringify(preserved));
         location.reload();
     };
@@ -798,6 +851,8 @@ function saveGame() {
         hollowKingRewards: state.hollowKingRewards,
         ritualAvailable: state.ritualAvailable,
         endingSeen: state.endingSeen,
+        ngPlus: state.ngPlus,
+        baselineKps: state.baselineKps,
         milestonesReached: Array.from(milestonesReached)
     };
     localStorage.setItem("archivist_save", JSON.stringify(saveData));
@@ -806,20 +861,24 @@ function saveGame() {
 
 // --- LOAD SYSTEM ---
 function loadGame() {
-    // Check for preserved rewards from a true ending reset.
+    // Check for preserved data from true ending choices.
     const preservedRaw = localStorage.getItem("archivist_preserved");
     if (preservedRaw) {
         try {
             const preserved = JSON.parse(preservedRaw);
             state.hollowKingRewards = preserved.hollowKingRewards || state.hollowKingRewards;
             state.knowledgePerClick = preserved.knowledgePerClick || 1;
-            state.prestige.bonus = preserved.prestige.bonus || 1.0;
+            state.prestige = preserved.prestige || state.prestige;
+            state.baselineKps = preserved.baselineKps || 0;
+            state.ngPlus = preserved.ngPlus || false;
             localStorage.removeItem("archivist_preserved");
             saveGame();
         } catch (e) {
             localStorage.removeItem("archivist_preserved");
         }
+        return;
     }
+
     const raw = localStorage.getItem("archivist_save");
     if (!raw) return;
     try {
@@ -832,6 +891,8 @@ function loadGame() {
         state.hollowKingRewards = saved.hollowKingRewards || state.hollowKingRewards;
         state.ritualAvailable = saved.ritualAvailable || false;
         state.endingSeen = saved.endingSeen || false;
+        state.ngPlus = saved.ngPlus || false;
+        state.baselineKps = saved.baselineKps || 0;
 
         if (saved.upgrades) {
             Object.keys(state.upgrades).forEach(key => {
@@ -841,14 +902,6 @@ function loadGame() {
 
         if (saved.milestonesReached) {
             saved.milestonesReached.forEach(m => milestonesReached.add(m));
-        }
-
-        // Restore Hollow Gift multiplier and Mark bonus if already claimed.
-        if (state.hollowKingRewards.gift) {
-            state.prestige.bonus = saved.prestige.bonus;
-        }
-        if (state.hollowKingRewards.mark) {
-            state.knowledgePerClick = saved.knowledgePerClick || 2;
         }
 
         recalculateKps();
