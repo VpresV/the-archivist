@@ -124,63 +124,58 @@ function getAudioContext() {
     return audioCtx;
 }
 
-// Click sound — dry papery scratch, like a quill on parchment.
-function playClickSound() {
+// Lore sound — papyrus unrolling, dry rustling paper with a faint resonance.
+function playLoreSound() {
     if (!soundEnabled) return;
     try {
         const ctx = getAudioContext();
 
-        // White noise burst filtered to sound dry and papery.
-        const bufferSize = ctx.sampleRate * 0.08;
+        // Layer 1: dry noise burst — the papyrus rustling.
+        const bufferSize = ctx.sampleRate * 0.4;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
             data[i] = (Math.random() * 2 - 1);
         }
 
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
+        const noiseSource = ctx.createBufferSource();
+        noiseSource.buffer = buffer;
 
-        // Bandpass filter to keep only the papery mid frequencies.
-        const filter = ctx.createBiquadFilter();
-        filter.type = "bandpass";
-        filter.frequency.value = 3000;
-        filter.Q.value = 0.8;
+        const noiseFilter = ctx.createBiquadFilter();
+        noiseFilter.type = "bandpass";
+        noiseFilter.frequency.value = 2000;
+        noiseFilter.Q.value = 0.5;
 
-        const gainNode = ctx.createGain();
-        gainNode.gain.setValueAtTime(0.18, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        noiseGain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
+        noiseGain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.15);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
 
-        source.connect(filter);
-        filter.connect(gainNode);
-        gainNode.connect(ctx.destination);
+        noiseSource.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
 
-        source.start(ctx.currentTime);
-        source.stop(ctx.currentTime + 0.08);
-    } catch (e) {}
-}
+        // Layer 2: faint low resonance — the weight of the document.
+        const resonator = ctx.createOscillator();
+        const resGain = ctx.createGain();
 
-// Lore sound — slow deep resonant hum, like something waking.
-function playLoreSound() {
-    if (!soundEnabled) return;
-    try {
-        const ctx = getAudioContext();
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
+        resonator.type = "sine";
+        resonator.frequency.setValueAtTime(90, ctx.currentTime);
+        resonator.frequency.exponentialRampToValueAtTime(70, ctx.currentTime + 0.6);
 
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
+        resGain.gain.setValueAtTime(0.001, ctx.currentTime);
+        resGain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.1);
+        resGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
 
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(80, ctx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 1.5);
+        resonator.connect(resGain);
+        resGain.connect(ctx.destination);
 
-        gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.3);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+        noiseSource.start(ctx.currentTime);
+        noiseSource.stop(ctx.currentTime + 0.4);
+        resonator.start(ctx.currentTime);
+        resonator.stop(ctx.currentTime + 0.6);
 
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 1.5);
     } catch (e) {}
 }
 
