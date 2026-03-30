@@ -1,8 +1,6 @@
 // The Archivist - Game Logic
 
 // --- STATE ---
-// This object holds the entire game state at any moment.
-// All numbers the player sees come from here.
 const state = {
     knowledge: 0,
     knowledgePerClick: 1,
@@ -21,8 +19,6 @@ const state = {
 };
 
 // --- UPGRADE DEFINITIONS ---
-// Each upgrade has a name, description, base cost, and how much
-// knowledge per second it contributes per level owned.
 const upgradeDefs = [
     {
         id: "quillScribe",
@@ -48,7 +44,6 @@ const upgradeDefs = [
 ];
 
 // --- DOM REFERENCES ---
-// We grab references to the HTML elements once and reuse them.
 const knowledgeCountEl = document.getElementById("knowledge-count");
 const fpsEl = document.getElementById("fps");
 const clickBtn = document.getElementById("click-btn");
@@ -63,7 +58,6 @@ clickBtn.addEventListener("click", () => {
 });
 
 // --- PASSIVE INCOME LOOP ---
-// Runs every second and adds knowledge based on knowledgePerSecond.
 setInterval(() => {
     if (state.knowledgePerSecond > 0) {
         const gained = state.knowledgePerSecond * state.prestige.bonus;
@@ -75,7 +69,6 @@ setInterval(() => {
 }, 1000);
 
 // --- DISPLAY UPDATE ---
-// Updates all visible numbers on the page to match the current state.
 function updateDisplay() {
     knowledgeCountEl.textContent = Math.floor(state.knowledge);
     fpsEl.textContent = (state.knowledgePerSecond * state.prestige.bonus).toFixed(1);
@@ -84,7 +77,6 @@ function updateDisplay() {
 }
 
 // --- UPGRADE COST CALCULATOR ---
-// Cost increases by 15% per level owned — standard clicker scaling formula.
 function getUpgradeCost(def) {
     return Math.floor(def.baseCost * Math.pow(1.15, state.upgrades[def.id]));
 }
@@ -93,7 +85,6 @@ function getUpgradeCost(def) {
 function buyUpgrade(defId) {
     const def = upgradeDefs.find(d => d.id === defId);
     const cost = getUpgradeCost(def);
-
     if (state.knowledge >= cost) {
         state.knowledge -= cost;
         state.upgrades[def.id]++;
@@ -162,7 +153,6 @@ function showLore(text) {
         document.getElementById("game-container").appendChild(panel);
     }
 
-    // Strip markdown symbols so the text renders cleanly.
     const clean = text
         .replace(/#{1,6}\s*/g, "")
         .replace(/\*\*/g, "")
@@ -172,14 +162,12 @@ function showLore(text) {
 
     document.getElementById("lore-text").textContent = clean;
 
-    // Double requestAnimationFrame ensures fade-in transition works correctly.
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             panel.classList.add("visible");
         });
     });
 
-    // Hide after 12 seconds.
     setTimeout(() => panel.classList.remove("visible"), 12000);
 }
 
@@ -194,10 +182,8 @@ async function triggerLoreEvent(milestone) {
                 upgrades: state.upgrades
             })
         });
-
         const data = await response.json();
         showLore(data.lore);
-
     } catch (err) {
         console.log("Lore generation failed:", err);
     }
@@ -221,7 +207,13 @@ function renderPrestige() {
             Descent level: <span>${count}</span> &nbsp;|&nbsp;
             Knowledge multiplier: <span>${bonus.toFixed(1)}x</span>
         </div>
-        <button id="save-btn">Save Progress</button>
+        <div id="action-buttons">
+            <button id="save-btn">✦ Save Progress</button>
+            <a id="kofi-btn" href="https://ko-fi.com/thearchivistgame" target="_blank">
+                Support the Archive
+            </a>
+        </div>
+        <div id="save-indicator"></div>
         ${canPrestige ? `<button id="prestige-btn">Descend Deeper (next bonus: ${nextBonus}%)</button>` : ""}
     `;
 
@@ -247,12 +239,8 @@ function doPrestige() {
     state.upgrades.shadowScholar = 0;
 
     milestonesReached.clear();
-
     triggerPrestigeLore(state.prestige.count);
-
-    // Save immediately after prestige so the descent level is never lost.
     saveGame();
-
     updateDisplay();
 }
 
@@ -268,10 +256,8 @@ async function triggerPrestigeLore(descentLevel) {
                 context: `The player has just descended to archive level ${descentLevel}. This is a prestige event. Write a darker, more unsettling fragment than before. The archive is pulling them deeper.`
             })
         });
-
         const data = await response.json();
         showLore(data.lore);
-
     } catch (err) {
         console.log("Prestige lore generation failed:", err);
     }
@@ -296,23 +282,18 @@ function saveGame() {
 function loadGame() {
     const raw = localStorage.getItem("archivist_save");
     if (!raw) return;
-
     try {
         const saved = JSON.parse(raw);
-
         state.knowledge = saved.knowledge || 0;
         state.knowledgePerClick = saved.knowledgePerClick || 1;
         state.knowledgePerSecond = saved.knowledgePerSecond || 0;
         state.totalEarned = saved.totalEarned || 0;
         state.upgrades = saved.upgrades || state.upgrades;
         state.prestige = saved.prestige || state.prestige;
-
         if (saved.milestonesReached) {
             saved.milestonesReached.forEach(m => milestonesReached.add(m));
         }
-
         recalculateKps();
-
     } catch (err) {
         console.log("Save data corrupted, starting fresh:", err);
         localStorage.removeItem("archivist_save");
@@ -321,22 +302,16 @@ function loadGame() {
 
 // --- SAVE INDICATOR ---
 function showSaveIndicator() {
-    let indicator = document.getElementById("save-indicator");
-    if (!indicator) {
-        indicator = document.createElement("div");
-        indicator.id = "save-indicator";
-        document.getElementById("game-container").appendChild(indicator);
-    }
+    const indicator = document.getElementById("save-indicator");
+    if (!indicator) return;
     indicator.textContent = "✦ Progress saved ✦";
     indicator.classList.add("visible");
     setTimeout(() => indicator.classList.remove("visible"), 2000);
 }
 
 // --- AUTOSAVE ---
-// Saves automatically every 30 seconds.
 setInterval(saveGame, 30000);
 
 // --- INIT ---
-// Load any existing save, then render the initial state.
 loadGame();
 updateDisplay();
