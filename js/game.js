@@ -106,12 +106,14 @@ const fpsEl = document.getElementById("fps");
 const clickBtn = document.getElementById("click-btn");
 
 // --- CLICK HANDLER ---
-clickBtn.addEventListener("click", () => {
+clickBtn.addEventListener("click", (e) => {
     const gained = state.knowledgePerClick * state.prestige.bonus;
     state.knowledge += gained;
     state.totalEarned += gained;
     updateDisplay();
     checkMilestones();
+    spawnFloatNumber(e, gained);
+    spawnRipple(e);
 });
 
 // --- PASSIVE INCOME LOOP ---
@@ -969,6 +971,33 @@ htpToggle.addEventListener("click", () => {
         localStorage.removeItem("htp_dismissed");
     }
 });
+
+// --- CLICK ANIMATION: FLOATING NUMBER ---
+// Spawns a number that floats upward from the click position.
+function spawnFloatNumber(e, amount) {
+    const el = document.createElement("div");
+    el.className = "float-number";
+    el.textContent = "+" + formatNumber(Math.floor(amount));
+    el.style.left = (e.clientX - 20) + "px";
+    el.style.top = (e.clientY - 10) + "px";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+}
+
+// --- CLICK ANIMATION: RIPPLE ---
+// Spawns a ripple effect on the button at the click position.
+function spawnRipple(e) {
+    const btn = document.getElementById("click-btn");
+    const ripple = document.createElement("span");
+    ripple.className = "ripple";
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
+    ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+}
 
 // --- INIT ---
 loadGame();
