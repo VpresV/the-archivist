@@ -448,4 +448,189 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    box-shadow: 0 0 60px rgba(200, 150, 50,
+    box-shadow: 0 0 60px rgba(200, 150, 50, 0.1);
+}
+
+.overlay-title {
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e8c87a;
+    letter-spacing: 4px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.overlay-text {
+    font-family: 'Crimson Text', serif;
+    font-size: 1.05rem;
+    color: #a08050;
+    line-height: 1.9;
+    font-style: italic;
+    text-align: center;
+}
+
+.overlay-text em {
+    color: #e8c87a;
+    font-style: normal;
+}
+
+.overlay-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.overlay-buttons button,
+.overlay-buttons a {
+    background: transparent;
+    color: #6b5030;
+    border: 1px solid #3a2a10;
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    padding: 10px 24px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.overlay-buttons button:hover,
+.overlay-buttons a:hover {
+    color: #c9a96e;
+    border-color: #5a3e1b;
+}
+
+/* Ritual confirm button — more prominent */
+#ritual-confirm-btn {
+    background: linear-gradient(145deg, #0a001a, #1a0030) !important;
+    color: #c87ae8 !important;
+    border-color: #5a1b8a !important;
+}
+
+#ritual-confirm-btn:hover {
+    color: #e8aaff !important;
+    box-shadow: 0 0 20px rgba(150, 50, 200, 0.3);
+}
+
+/* Banishment minigame */
+#banishment-progress-bar-container {
+    width: 100%;
+    height: 12px;
+    background: #1a0a00;
+    border: 1px solid #3a2a10;
+    overflow: hidden;
+}
+
+#banishment-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #5a1b8a, #c87ae8);
+    transition: width 0.1s ease;
+}
+
+#banishment-clicks-text {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    color: #6b5030;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+#banishment-click-btn {
+    background: linear-gradient(145deg, #0a001a, #1a0030);
+    color: #c87ae8;
+    border: 1px solid #5a1b8a;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.3rem;
+    padding: 18px 40px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.1s ease;
+    box-shadow: 0 0 20px rgba(150, 50, 200, 0.2);
+    align-self: center;
+}
+
+#banishment-click-btn:hover {
+    background: linear-gradient(145deg, #1a0030, #2d0050);
+    box-shadow: 0 0 35px rgba(150, 50, 200, 0.4);
+    color: #e8aaff;
+    transform: scale(1.02);
+}
+
+#banishment-click-btn:active {
+    transform: scale(0.98);
+}
+
+/* Reward buttons */
+#reward-buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.reward-btn {
+    background: linear-gradient(145deg, #100800, #1e1000);
+    color: #c9a96e;
+    border: 1px solid #5a3e1b;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.95rem;
+    padding: 14px 18px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.6;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.reward-btn:hover {
+    background: linear-gradient(145deg, #1e1000, #2d1a00);
+    box-shadow: 0 0 20px rgba(200, 150, 50, 0.2);
+    color: #e8c87a;
+    transform: translateY(-1px);
+}
+
+.reward-btn strong {
+    display: block;
+    color: #e8c87a;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+}
+
+.reward-btn small {
+    display: block;
+    font-style: italic;
+    color: #6b5030;
+    font-size: 0.85rem;
+}
+
+/* True ending screen */
+.ending-screen {
+    background: rgba(0, 0, 0, 0.97) !important;
+}
+
+.ending-box {
+    border-color: #3a2a10 !important;
+    box-shadow: 0 0 100px rgba(200, 150, 50, 0.05) !important;
+    max-width: 640px !important;
+}
+
+.ending-title {
+    font-size: 1rem !important;
+    color: #a08050 !important;
+    letter-spacing: 6px !important;
+}
+
+.ending-text {
+    font-size: 1.1rem !important;
+    color: #8a6a3a !important;
+    line-height: 2.1 !important;
+}
+
+.ending-text em {
+    color: #e8c87a !important;
+    font-size: 1.2rem !important;
+}
