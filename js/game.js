@@ -30,7 +30,7 @@ const state = {
     endingSeen: false,
     ngPlus: false,
     baselineKps: 0,
-    // Lifetime statistics — never reset.
+    loreLog: [],
     stats: {
         totalFragmentsEver: 0,
         totalDescents: 0,
@@ -131,7 +131,7 @@ function getAudioContext() {
     return audioCtx;
 }
 
-// Lore sound — aged papyrus slowly unrolling, soft and dry.
+// Lore sound — aged papyrus slowly unrolling.
 function playLoreSound() {
     if (!soundEnabled) return;
     try {
@@ -184,7 +184,7 @@ function playLoreSound() {
     } catch (e) {}
 }
 
-// Prestige sound — descending tone, like falling into darkness.
+// Prestige sound — descending tone.
 function playPrestigeSound() {
     if (!soundEnabled) return;
     try {
@@ -365,6 +365,10 @@ function showLore(title, text) {
         .replace(/\*/g, "")
         .trim();
 
+    // Add to lore log — newest first, max 20 entries.
+    state.loreLog.unshift({ title: cleanTitle, text: cleanText });
+    if (state.loreLog.length > 20) state.loreLog.pop();
+
     document.getElementById("lore-title").textContent = cleanTitle;
     document.getElementById("lore-text").textContent = cleanText;
 
@@ -481,6 +485,7 @@ function doPrestige() {
     state.knowledgePerClick = state.hollowKingRewards.mark ? (state.ngPlus ? 3 : 2) : 1;
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
+    state.loreLog = [];
 
     Object.keys(state.upgrades).forEach(key => {
         state.upgrades[key] = 0;
@@ -759,7 +764,6 @@ function showVictoryOverlay() {
 
 // --- CLAIM REWARD ---
 function claimReward(rewardId) {
-    // Track Hollow King defeat — only count once per victory.
     if (!state.hollowKingRewards[rewardId]) {
         state.stats.hollowKingDefeats++;
     }
@@ -972,6 +976,24 @@ function renderStats() {
     `;
 }
 
+// --- LORE ARCHIVE ---
+function renderLoreArchive() {
+    const panel = document.getElementById("lore-archive-panel");
+    if (!panel) return;
+
+    if (state.loreLog.length === 0) {
+        panel.innerHTML = `<div class="lore-archive-empty">No fragments have surfaced yet this run.</div>`;
+        return;
+    }
+
+    panel.innerHTML = state.loreLog.map(entry => `
+        <div class="lore-archive-entry">
+            <div class="lore-archive-title">${entry.title}</div>
+            <div class="lore-archive-text">${entry.text}</div>
+        </div>
+    `).join("");
+}
+
 // --- SAVE SYSTEM ---
 function saveGame() {
     const saveData = {
@@ -986,6 +1008,7 @@ function saveGame() {
         endingSeen: state.endingSeen,
         ngPlus: state.ngPlus,
         baselineKps: state.baselineKps,
+        loreLog: state.loreLog,
         stats: state.stats,
         milestonesReached: Array.from(milestonesReached)
     };
@@ -1026,6 +1049,7 @@ function loadGame() {
         state.endingSeen = saved.endingSeen || false;
         state.ngPlus = saved.ngPlus || false;
         state.baselineKps = saved.baselineKps || 0;
+        state.loreLog = saved.loreLog || [];
 
         if (saved.stats) {
             state.stats.totalFragmentsEver = saved.stats.totalFragmentsEver || 0;
@@ -1159,17 +1183,35 @@ htpToggle.addEventListener("click", () => {
     }
 });
 
-// --- STATS BUTTON TOGGLE ---
+// --- STATS SECTION TOGGLE ---
 const statsBtn = document.getElementById("stats-btn");
-const statsPanel = document.getElementById("stats-panel");
+const statsPanelEl = document.getElementById("stats-panel");
 let statsVisible = false;
 
 if (statsBtn) {
     statsBtn.addEventListener("click", () => {
         statsVisible = !statsVisible;
-        statsPanel.style.display = statsVisible ? "block" : "none";
-        statsBtn.textContent = statsVisible ? "Hide Archive Records" : "View Archive Records";
+        statsPanelEl.style.display = statsVisible ? "block" : "none";
+        statsBtn.textContent = statsVisible
+            ? "View Archive Records ▴"
+            : "View Archive Records ▾";
         if (statsVisible) renderStats();
+    });
+}
+
+// --- LORE ARCHIVE TOGGLE ---
+const loreArchiveBtn = document.getElementById("lore-archive-btn");
+const loreArchivePanelEl = document.getElementById("lore-archive-panel");
+let loreArchiveVisible = false;
+
+if (loreArchiveBtn) {
+    loreArchiveBtn.addEventListener("click", () => {
+        loreArchiveVisible = !loreArchiveVisible;
+        loreArchivePanelEl.style.display = loreArchiveVisible ? "block" : "none";
+        loreArchiveBtn.textContent = loreArchiveVisible
+            ? "View Recovered Fragments ▴"
+            : "View Recovered Fragments ▾";
+        if (loreArchiveVisible) renderLoreArchive();
     });
 }
 
