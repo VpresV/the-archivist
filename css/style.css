@@ -40,22 +40,26 @@ body {
     text-align: center;
 }
 
-/* Status indicator — Mark and NG+ merged */
-#status-indicator {
+/* Mark — gold achievement badge */
+#mark-indicator {
     font-family: 'Crimson Text', serif;
     font-size: 0.85rem;
+    color: #e8c87a;
     letter-spacing: 3px;
     text-align: center;
     font-style: italic;
     opacity: 0.8;
 }
 
-.status-indicator-mark {
-    color: #e8c87a;
-}
-
-.status-indicator-ngplus {
-    color: #8a3a3a;
+/* NG+ warning — dread indicator */
+#ngplus-indicator {
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    color: #8a2a2a;
+    letter-spacing: 2px;
+    text-align: center;
+    font-style: italic;
+    animation: pulse 3s infinite;
 }
 
 #knowledge-display {
