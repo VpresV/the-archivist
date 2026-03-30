@@ -282,3 +282,47 @@ body {
 #prestige-btn:active {
     transform: translateY(1px);
 }
+
+/* How to Play */
+#how-to-play {
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+#htp-toggle {
+    background: transparent;
+    color: #6b5030;
+    border: none;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: color 0.2s ease;
+    margin-bottom: 10px;
+}
+
+#htp-toggle:hover {
+    color: #c9a96e;
+}
+
+#htp-content {
+    border: 1px solid #2a1a08;
+    background: linear-gradient(145deg, #0d0800, #150f00);
+    padding: 18px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#htp-content p {
+    font-size: 0.95rem;
+    color: #8a6a3a;
+    font-style: italic;
+    line-height: 1.7;
+}
+
+#htp-content em {
+    color: #c9a96e;
+    font-style: normal;
+}
