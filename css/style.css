@@ -150,11 +150,14 @@ body {
     background: linear-gradient(145deg, #0d0800, #150f00);
     padding: 20px 28px;
     margin-top: 10px;
-    display: none;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    pointer-events: none;
 }
 
 #lore-panel.visible {
-    display: block;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 #lore-title {
