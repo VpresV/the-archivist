@@ -225,7 +225,15 @@ function showLore(title, text) {
         panel = document.createElement("div");
         panel.id = "lore-panel";
         panel.innerHTML = `<div id="lore-title"></div><div id="lore-text"></div>`;
-        document.getElementById("game-container").appendChild(panel);
+        
+        // Insert lore panel before the upgrade container so it appears
+        // in the middle of the game rather than at the bottom.
+        const upgradeContainer = document.getElementById("upgrade-container");
+        if (upgradeContainer) {
+            document.getElementById("game-container").insertBefore(panel, upgradeContainer);
+        } else {
+            document.getElementById("game-container").appendChild(panel);
+        }
     }
 
     const cleanText = text
