@@ -150,12 +150,19 @@ body {
     padding: 20px 28px;
     margin-top: 10px;
     opacity: 0;
-    transition: opacity 1.2s ease;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    transition: opacity 1.2s ease, max-height 1.2s ease, padding 1.2s ease;
     pointer-events: none;
 }
 
 #lore-panel.visible {
     opacity: 1;
+    max-height: 400px;
+    padding-top: 20px;
+    padding-bottom: 20px;
     pointer-events: auto;
 }
 
