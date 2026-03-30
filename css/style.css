@@ -1,666 +1,56 @@
-/* The Archivist - Stylesheet */
-
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    background-color: #0a0a0a;
-    background-image: radial-gradient(ellipse at top, #1a0a0a 0%, #0a0a0a 70%);
-    color: #c9a96e;
-    font-family: 'Crimson Text', Georgia, serif;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 40px 20px;
-}
-
-#game-container {
-    width: 100%;
-    max-width: 900px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
-#game-title {
-    font-family: 'Cinzel Decorative', cursive;
-    font-size: 3.5rem;
-    color: #e8c87a;
-    text-shadow:
-        0 0 20px rgba(200, 150, 50, 0.5),
-        0 0 60px rgba(200, 100, 20, 0.2);
-    letter-spacing: 4px;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-/* Mark — gold achievement badge */
-#mark-indicator {
-    font-family: 'Crimson Text', serif;
-    font-size: 0.85rem;
-    color: #e8c87a;
-    letter-spacing: 3px;
-    text-align: center;
-    font-style: italic;
-    opacity: 0.8;
-}
-
-/* NG+ warning — dread indicator */
-#ngplus-indicator {
-    font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
-    color: #8a2a2a;
-    letter-spacing: 2px;
-    text-align: center;
-    font-style: italic;
-    animation: pulse 3s infinite;
-}
-
-#knowledge-display {
-    font-size: 1.4rem;
-    color: #a08050;
-    letter-spacing: 2px;
-}
-
-#knowledge-count {
-    color: #e8c87a;
-    font-weight: 600;
-    font-size: 1.6rem;
-}
-
-#click-btn {
-    background: linear-gradient(145deg, #1a0f00, #2d1a00);
-    color: #e8c87a;
-    border: 1px solid #5a3e1b;
-    font-family: 'Crimson Text', serif;
-    font-size: 1.2rem;
-    padding: 16px 40px;
-    cursor: pointer;
-    letter-spacing: 2px;
-    transition: all 0.2s ease;
-    box-shadow:
-        0 0 15px rgba(200, 150, 50, 0.1),
-        inset 0 0 10px rgba(0,0,0,0.5);
-}
-
-#click-btn:hover {
-    background: linear-gradient(145deg, #2d1a00, #4a2e00);
-    box-shadow:
-        0 0 25px rgba(200, 150, 50, 0.3),
-        inset 0 0 10px rgba(0,0,0,0.3);
-    color: #fff5d6;
-    transform: translateY(-1px);
-}
-
-#click-btn:active {
-    transform: translateY(1px);
-    box-shadow: 0 0 8px rgba(200, 150, 50, 0.2);
-}
-
-#per-second {
-    font-size: 1rem;
-    color: #6b5030;
-    letter-spacing: 1px;
-    font-style: italic;
-}
-
-#upgrade-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    margin-top: 10px;
-}
-
-.upgrade-btn {
-    background: linear-gradient(145deg, #100800, #1e1000);
-    color: #8a6a3a;
-    border: 1px solid #3a2a10;
-    font-family: 'Crimson Text', serif;
-    font-size: 0.95rem;
-    padding: 14px 18px;
-    cursor: pointer;
-    width: 200px;
-    text-align: center;
-    line-height: 1.6;
-    transition: all 0.2s ease;
-    opacity: 0.6;
-}
-
-.upgrade-btn.affordable {
-    opacity: 1;
-    border-color: #5a3e1b;
-    color: #c9a96e;
-    box-shadow: 0 0 10px rgba(200, 150, 50, 0.1);
-}
-
-.upgrade-btn.affordable:hover {
-    background: linear-gradient(145deg, #1e1000, #2d1a00);
-    box-shadow: 0 0 20px rgba(200, 150, 50, 0.2);
-    color: #e8c87a;
-    transform: translateY(-1px);
-}
-
-.upgrade-btn strong {
-    display: block;
-    font-size: 1.05rem;
-    color: #e8c87a;
-    margin-bottom: 4px;
-}
-
-.upgrade-btn small {
-    display: block;
-    font-style: italic;
-    color: #6b5030;
-    margin-bottom: 6px;
-    font-size: 0.85rem;
-}
-
-/* Lore panel */
-#lore-panel {
-    width: 100%;
-    max-width: 600px;
-    border: 1px solid #3a2a10;
-    background: linear-gradient(145deg, #0d0800, #150f00);
-    padding: 20px 28px;
-    margin-top: 10px;
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: hidden;
-    transition: opacity 1.2s ease, max-height 1.2s ease, padding 1.2s ease;
-    pointer-events: none;
-}
-
-#lore-panel.visible {
-    opacity: 1;
-    max-height: 400px;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    pointer-events: auto;
-}
-
-#lore-title {
-    font-family: 'Crimson Text', serif;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #a08050;
-    margin-bottom: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-#lore-text {
-    font-size: 1rem;
-    color: #a08050;
-    font-style: italic;
-    line-height: 1.8;
-}
-
-/* Prestige UI */
-#prestige-container {
-    width: 100%;
-    max-width: 600px;
-    text-align: center;
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-}
-
-#prestige-info {
-    font-size: 0.95rem;
-    color: #6b5030;
-    letter-spacing: 1px;
-    font-style: italic;
-}
-
-#prestige-info span {
-    color: #c9a96e;
-    font-style: normal;
-    font-weight: 600;
-}
-
-#next-unlock-info {
-    font-size: 0.85rem;
-    color: #5a3e1b;
-    font-style: italic;
-    letter-spacing: 1px;
-}
-
-/* Ritual hint */
-#ritual-hint {
-    font-size: 0.9rem;
-    color: #8a3a3a;
-    font-style: italic;
-    letter-spacing: 2px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-}
-
-/* Action buttons row */
-#action-buttons {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-#save-btn {
-    background: transparent;
-    color: #6b5030;
-    border: 1px solid #3a2a10;
-    font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    padding: 8px 20px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.2s ease;
-}
-
-#save-btn:hover {
-    color: #c9a96e;
-    border-color: #5a3e1b;
-}
-
-#kofi-btn {
-    background: transparent;
-    color: #6b5030;
-    border: 1px solid #3a2a10;
-    font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    padding: 8px 20px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.2s ease;
-    display: inline-block;
-}
-
-#kofi-btn:hover {
-    color: #c9a96e;
-    border-color: #5a3e1b;
-}
-
-#sound-btn {
+/* Statistics panel */
+#stats-btn {
     background: transparent;
     color: #4a3020;
     border: 1px solid #2a1a08;
     font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    padding: 8px 20px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.2s ease;
-}
-
-#sound-btn:hover {
-    color: #6b5030;
-    border-color: #3a2a10;
-}
-
-#save-indicator {
     font-size: 0.85rem;
-    color: #6b5030;
-    letter-spacing: 2px;
-    font-style: italic;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    margin-top: 4px;
-    min-height: 1.2em;
-    cursor: default;
-}
-
-#save-indicator.visible {
-    opacity: 1;
-}
-
-#prestige-btn {
-    background: linear-gradient(145deg, #1a0000, #2d0a00);
-    color: #e87a7a;
-    border: 1px solid #5a1b1b;
-    font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
-    padding: 14px 32px;
-    cursor: pointer;
-    letter-spacing: 2px;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 15px rgba(200, 50, 50, 0.1);
-}
-
-#prestige-btn:hover {
-    background: linear-gradient(145deg, #2d0a00, #4a1000);
-    box-shadow: 0 0 25px rgba(200, 50, 50, 0.3);
-    color: #ffaaaa;
-    transform: translateY(-1px);
-}
-
-#prestige-btn:active {
-    transform: translateY(1px);
-}
-
-/* Ritual button */
-#ritual-btn {
-    background: linear-gradient(145deg, #0a001a, #1a0030);
-    color: #c87ae8;
-    border: 1px solid #5a1b8a;
-    font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
-    padding: 14px 32px;
-    cursor: pointer;
-    letter-spacing: 2px;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 15px rgba(150, 50, 200, 0.1);
-}
-
-#ritual-btn:hover {
-    background: linear-gradient(145deg, #1a0030, #2d0050);
-    box-shadow: 0 0 25px rgba(150, 50, 200, 0.3);
-    color: #e8aaff;
-    transform: translateY(-1px);
-}
-
-#ritual-btn:active {
-    transform: translateY(1px);
-}
-
-/* Reset button */
-#reset-btn {
-    background: transparent;
-    color: #3a1a1a;
-    border: none;
-    font-family: 'Crimson Text', serif;
-    font-size: 0.75rem;
+    padding: 6px 16px;
     cursor: pointer;
     letter-spacing: 1px;
     transition: color 0.2s ease;
-    margin-top: 4px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-#reset-btn:hover {
-    color: #e87a7a;
-}
-
-/* How to Play */
-#how-to-play {
-    width: 100%;
-    max-width: 600px;
-    text-align: center;
-}
-
-#htp-toggle {
-    background: transparent;
-    color: #6b5030;
-    border: none;
-    font-family: 'Crimson Text', serif;
-    font-size: 0.95rem;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: color 0.2s ease;
-    margin-bottom: 10px;
-}
-
-#htp-toggle:hover {
-    color: #c9a96e;
-}
-
-#htp-content {
-    border: 1px solid #2a1a08;
-    background: linear-gradient(145deg, #0d0800, #150f00);
-    padding: 18px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-#htp-content p {
-    font-size: 0.95rem;
-    color: #8a6a3a;
-    font-style: italic;
-    line-height: 1.7;
-}
-
-#htp-content em {
-    color: #c9a96e;
-    font-style: normal;
-}
-
-/* Overlay screens — shared base styles */
-.overlay-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.92);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-    pointer-events: none;
-    overflow-y: auto;
-    padding: 20px;
-}
-
-.overlay-screen.visible {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.overlay-box {
-    max-width: 580px;
-    width: 100%;
-    border: 1px solid #5a3e1b;
-    background: linear-gradient(145deg, #0d0800, #1a0f00);
-    padding: 36px 40px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    box-shadow: 0 0 60px rgba(200, 150, 50, 0.1);
-}
-
-.overlay-title {
-    font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #e8c87a;
-    letter-spacing: 4px;
-    text-align: center;
-    text-transform: uppercase;
-}
-
-.overlay-text {
-    font-family: 'Crimson Text', serif;
-    font-size: 1.05rem;
-    color: #a08050;
-    line-height: 1.9;
-    font-style: italic;
-    text-align: center;
-}
-
-.overlay-text em {
-    color: #e8c87a;
-    font-style: normal;
-}
-
-.overlay-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.overlay-buttons button,
-.overlay-buttons a {
-    background: transparent;
-    color: #6b5030;
-    border: 1px solid #3a2a10;
-    font-family: 'Crimson Text', serif;
-    font-size: 1rem;
-    padding: 10px 24px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    display: inline-block;
-}
-
-.overlay-buttons button:hover,
-.overlay-buttons a:hover {
-    color: #c9a96e;
-    border-color: #5a3e1b;
-}
-
-/* Ritual confirm button */
-#ritual-confirm-btn {
-    background: linear-gradient(145deg, #0a001a, #1a0030) !important;
-    color: #c87ae8 !important;
-    border-color: #5a1b8a !important;
-}
-
-#ritual-confirm-btn:hover {
-    color: #e8aaff !important;
-    box-shadow: 0 0 20px rgba(150, 50, 200, 0.3);
-}
-
-/* Banishment minigame */
-#banishment-progress-bar-container {
-    width: 100%;
-    height: 12px;
-    background: #1a0a00;
-    border: 1px solid #3a2a10;
-    overflow: hidden;
-}
-
-#banishment-progress-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #5a1b8a, #c87ae8);
-    transition: width 0.1s ease;
-}
-
-#banishment-clicks-text {
-    font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    color: #6b5030;
-    text-align: center;
-    letter-spacing: 1px;
-}
-
-#banishment-click-btn {
-    background: linear-gradient(145deg, #0a001a, #1a0030);
-    color: #c87ae8;
-    border: 1px solid #5a1b8a;
-    font-family: 'Crimson Text', serif;
-    font-size: 1.3rem;
-    padding: 18px 40px;
-    cursor: pointer;
-    letter-spacing: 2px;
-    transition: all 0.1s ease;
-    box-shadow: 0 0 20px rgba(150, 50, 200, 0.2);
+    margin-top: 8px;
     align-self: center;
 }
 
-#banishment-click-btn:hover {
-    background: linear-gradient(145deg, #1a0030, #2d0050);
-    box-shadow: 0 0 35px rgba(150, 50, 200, 0.4);
-    color: #e8aaff;
-    transform: scale(1.02);
+#stats-btn:hover {
+    color: #8a6a3a;
+    border-color: #3a2a10;
 }
 
-#banishment-click-btn:active {
-    transform: scale(0.98);
+#stats-panel {
+    display: none;
+    width: 100%;
+    margin-top: 12px;
+    border-top: 1px solid #2a1a08;
+    padding-top: 12px;
 }
 
-/* Reward buttons */
-#reward-buttons-container {
+.stats-row {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-}
-
-.reward-btn {
-    background: linear-gradient(145deg, #100800, #1e1000);
-    color: #c9a96e;
-    border: 1px solid #5a3e1b;
-    font-family: 'Crimson Text', serif;
-    font-size: 0.95rem;
-    padding: 14px 18px;
-    cursor: pointer;
-    text-align: center;
-    line-height: 1.6;
-    transition: all 0.2s ease;
-    width: 100%;
-}
-
-.reward-btn:hover {
-    background: linear-gradient(145deg, #1e1000, #2d1a00);
-    box-shadow: 0 0 20px rgba(200, 150, 50, 0.2);
-    color: #e8c87a;
-    transform: translateY(-1px);
-}
-
-.reward-btn strong {
-    display: block;
-    color: #e8c87a;
-    font-size: 1.05rem;
-    margin-bottom: 4px;
-}
-
-.reward-btn small {
-    display: block;
-    font-style: italic;
-    color: #6b5030;
+    justify-content: space-between;
     font-size: 0.85rem;
+    color: #6b5030;
+    padding: 4px 0;
+    border-bottom: 1px solid #1a0a00;
+    font-style: normal;
+    letter-spacing: 0.5px;
 }
 
-/* True ending screen */
-.ending-screen {
-    background: rgba(0, 0, 0, 0.97) !important;
+.stats-row span:first-child {
+    color: #5a3e1b;
 }
 
-.ending-box {
-    border-color: #3a2a10 !important;
-    box-shadow: 0 0 100px rgba(200, 150, 50, 0.05) !important;
-    max-width: 640px !important;
+.stats-row span:last-child {
+    color: #a08050;
+    text-align: right;
 }
 
-.ending-title {
-    font-size: 1rem !important;
-    color: #a08050 !important;
-    letter-spacing: 6px !important;
+.ngplus-row span {
+    color: #8a3a3a !important;
 }
 
-.ending-text {
-    font-size: 1.1rem !important;
-    color: #8a6a3a !important;
-    line-height: 2.1 !important;
-}
-
-.ending-text em {
-    color: #e8c87a !important;
-    font-size: 1.2rem !important;
-}
-
-/* Click animation — floating number */
+/* Click animation */
 .float-number {
     position: fixed;
     font-family: 'Crimson Text', serif;
@@ -683,16 +73,27 @@ body {
     }
 }
 
-/* Click ripple on button */
-#click-btn {
-    position: relative;
-    overflow: hidden;
-}
-
-/* Click pulse — subtle glow instead of ripple */
 #click-btn.clicked {
     box-shadow:
         0 0 40px rgba(200, 150, 50, 0.5),
         inset 0 0 15px rgba(200, 150, 50, 0.1);
     transition: box-shadow 0.05s ease;
+}
+
+/* Sound button */
+#sound-btn {
+    background: transparent;
+    color: #4a3020;
+    border: 1px solid #2a1a08;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    padding: 8px 20px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+#sound-btn:hover {
+    color: #6b5030;
+    border-color: #3a2a10;
 }
