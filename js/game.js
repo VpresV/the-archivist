@@ -21,7 +21,6 @@ const state = {
         bonus: 1.0,
         threshold: 10000
     },
-    // Hollow King rewards persist across prestiges.
     hollowKingRewards: {
         codex: false,
         mark: false,
@@ -382,6 +381,8 @@ function doPrestige() {
 
     // True ending at descent 15 — no warning, just hits.
     if (state.prestige.count >= 15 && !state.endingSeen) {
+        saveGame();
+        updateDisplay();
         setTimeout(() => showTrueEnding(), 2000);
         return;
     }
@@ -455,12 +456,11 @@ function showRitualOverlay() {
 function showBanishmentOverlay() {
     removeOverlay("banishment-overlay");
 
-    // Required clicks scales with descent level.
     const requiredClicks = 50 + (state.prestige.count * 10);
     let currentClicks = 0;
     let timeLeft = 30;
     let timerInterval = null;
-    let failed = false;
+    let concluded = false;
 
     const overlay = document.createElement("div");
     overlay.id = "banishment-overlay";
@@ -483,23 +483,21 @@ function showBanishmentOverlay() {
     document.body.appendChild(overlay);
     fadeIn(overlay);
 
-    // Start countdown.
     timerInterval = setInterval(() => {
         timeLeft--;
         const timerEl = document.getElementById("banishment-timer");
         if (timerEl) timerEl.textContent = `Time remaining: ${timeLeft}s`;
 
-        if (timeLeft <= 0) {
+        if (timeLeft <= 0 && !concluded) {
+            concluded = true;
             clearInterval(timerInterval);
-            if (!failed) {
-                failed = true;
-                showBanishmentFailed();
-            }
+            removeOverlay("banishment-overlay");
+            setTimeout(() => showBanishmentFailed(), 500);
         }
     }, 1000);
 
     document.getElementById("banishment-click-btn").onclick = () => {
-        if (failed) return;
+        if (concluded) return;
         currentClicks++;
 
         const progress = Math.min((currentClicks / requiredClicks) * 100, 100);
@@ -509,46 +507,44 @@ function showBanishmentOverlay() {
         if (clicksText) clicksText.textContent = `${currentClicks} / ${requiredClicks}`;
 
         if (currentClicks >= requiredClicks) {
+            concluded = true;
             clearInterval(timerInterval);
-            failed = true;
             removeOverlay("banishment-overlay");
             setTimeout(() => showVictoryOverlay(), 500);
         }
     };
+}
 
-    function showBanishmentFailed() {
-        removeOverlay("banishment-overlay");
+// --- BANISHMENT FAILED ---
+function showBanishmentFailed() {
+    const penalty = Math.floor(state.knowledge * 0.3);
+    state.knowledge = Math.max(0, state.knowledge - penalty);
+    updateDisplay();
 
-        // Failure penalty — lose 30% of current knowledge.
-        const penalty = Math.floor(state.knowledge * 0.3);
-        state.knowledge = Math.max(0, state.knowledge - penalty);
-        updateDisplay();
-
-        const failOverlay = document.createElement("div");
-        failOverlay.id = "fail-overlay";
-        failOverlay.className = "overlay-screen";
-        failOverlay.innerHTML = `
-            <div class="overlay-box">
-                <div class="overlay-title">The King Endures</div>
-                <div class="overlay-text">
-                    The darkness was too great. The Hollow King retreated — but not before taking
-                    something with him.<br><br>
-                    <em>You lost ${penalty.toLocaleString()} knowledge.</em><br><br>
-                    The ritual may be attempted again.
-                </div>
-                <div class="overlay-buttons">
-                    <button id="fail-close-btn">Return to the Archive</button>
-                </div>
+    const failOverlay = document.createElement("div");
+    failOverlay.id = "fail-overlay";
+    failOverlay.className = "overlay-screen";
+    failOverlay.innerHTML = `
+        <div class="overlay-box">
+            <div class="overlay-title">The King Endures</div>
+            <div class="overlay-text">
+                The darkness was too great. The Hollow King retreated — but not before taking
+                something with him.<br><br>
+                <em>You lost ${penalty.toLocaleString()} knowledge.</em><br><br>
+                The ritual may be attempted again.
             </div>
-        `;
+            <div class="overlay-buttons">
+                <button id="fail-close-btn">Return to the Archive</button>
+            </div>
+        </div>
+    `;
 
-        document.body.appendChild(failOverlay);
-        fadeIn(failOverlay);
+    document.body.appendChild(failOverlay);
+    fadeIn(failOverlay);
 
-        document.getElementById("fail-close-btn").onclick = () => {
-            removeOverlay("fail-overlay");
-        };
-    }
+    document.getElementById("fail-close-btn").onclick = () => {
+        removeOverlay("fail-overlay");
+    };
 }
 
 // --- HOLLOW KING VICTORY ---
@@ -557,7 +553,6 @@ function showVictoryOverlay() {
         state.hollowKingRewards.mark &&
         state.hollowKingRewards.gift;
 
-    // Build available reward buttons.
     const rewardButtons = [];
     if (!state.hollowKingRewards.codex) {
         rewardButtons.push(`
@@ -614,15 +609,15 @@ function showVictoryOverlay() {
     document.body.appendChild(overlay);
     fadeIn(overlay);
 
-    // Reward handlers.
+    // Reward handlers — each closes the overlay immediately on click.
     const codexBtn = document.getElementById("reward-codex");
-    if (codexBtn) codexBtn.onclick = () => claimReward("codex", overlay);
+    if (codexBtn) codexBtn.onclick = () => claimReward("codex");
 
     const markBtn = document.getElementById("reward-mark");
-    if (markBtn) markBtn.onclick = () => claimReward("mark", overlay);
+    if (markBtn) markBtn.onclick = () => claimReward("mark");
 
     const giftBtn = document.getElementById("reward-gift");
-    if (giftBtn) giftBtn.onclick = () => claimReward("gift", overlay);
+    if (giftBtn) giftBtn.onclick = () => claimReward("gift");
 
     document.getElementById("victory-close-btn").onclick = () => {
         state.ritualAvailable = false;
@@ -633,25 +628,32 @@ function showVictoryOverlay() {
 }
 
 // --- CLAIM REWARD ---
-function claimReward(rewardId, overlay) {
+// Claims the chosen reward, closes the overlay immediately,
+// then triggers any associated effects.
+function claimReward(rewardId) {
     state.hollowKingRewards[rewardId] = true;
+    state.ritualAvailable = false;
 
+    // Apply reward effects.
     if (rewardId === "gift") {
-        // Hollow Gift — permanent 3x bonus multiplier.
         state.prestige.bonus *= 3;
     }
 
-    if (rewardId === "codex") {
-        // Forbidden Codex — trigger a special deep lore event.
-        triggerCodexLore();
-    }
-
-    // Remove the claimed button.
-    const btn = document.getElementById(`reward-${rewardId}`);
-    if (btn) btn.remove();
-
+    // Close the victory overlay first, then trigger effects.
+    removeOverlay("victory-overlay");
     saveGame();
     updateDisplay();
+
+    // Small delay so the overlay is gone before lore appears.
+    setTimeout(() => {
+        if (rewardId === "codex") {
+            triggerCodexLore();
+        } else if (rewardId === "mark") {
+            showLore("The Archivist's Mark", "Your name has been written in ink older than language. The archive will not forget you. Something in the dark nods slowly, as if satisfied.");
+        } else if (rewardId === "gift") {
+            showLore("The Hollow Gift", "The King left a splinter of himself behind. It settled somewhere behind your eyes. The fragments come faster now — as if they were always yours to begin with.");
+        }
+    }, 800);
 }
 
 // --- CODEX LORE ---
@@ -674,7 +676,6 @@ async function triggerCodexLore() {
 }
 
 // --- ARCHIVIST'S MARK RENDERER ---
-// Shows a permanent golden sigil if the mark has been claimed.
 function renderMark() {
     if (!state.hollowKingRewards.mark) return;
 
@@ -727,7 +728,6 @@ function showTrueEnding() {
     fadeIn(overlay);
 
     document.getElementById("ending-close-btn").onclick = () => {
-        // Wipe everything and restart completely.
         localStorage.clear();
         location.reload();
     };
@@ -812,8 +812,8 @@ function loadGame() {
         }
 
         // Restore Hollow Gift multiplier if already claimed.
-        if (state.hollowKingRewards.gift && state.prestige.bonus < 3) {
-            state.prestige.bonus *= 3;
+        if (state.hollowKingRewards.gift) {
+            state.prestige.bonus = saved.prestige.bonus;
         }
 
         recalculateKps();
