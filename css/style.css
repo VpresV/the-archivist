@@ -642,3 +642,48 @@ body {
     color: #e8c87a !important;
     font-size: 1.2rem !important;
 }
+
+/* Click animation — floating number */
+.float-number {
+    position: fixed;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    color: #e8c87a;
+    pointer-events: none;
+    z-index: 999;
+    animation: floatUp 1s ease-out forwards;
+    text-shadow: 0 0 10px rgba(200, 150, 50, 0.5);
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-60px) scale(0.8);
+    }
+}
+
+/* Click ripple on button */
+#click-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+#click-btn .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(232, 200, 122, 0.3);
+    transform: scale(0);
+    animation: rippleEffect 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes rippleEffect {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
