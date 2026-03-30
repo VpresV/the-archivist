@@ -190,6 +190,10 @@ async function triggerLoreEvent(milestone) {
 }
 
 // --- PRESTIGE RENDERER ---
+// Only rebuilds the DOM when prestige state actually changes,
+// preventing hover flicker caused by constant re-rendering.
+let lastPrestigeSnapshot = "";
+
 function renderPrestige() {
     let container = document.getElementById("prestige-container");
     if (!container) {
@@ -201,6 +205,12 @@ function renderPrestige() {
     const { count, bonus, threshold } = state.prestige;
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
+
+    // Build a snapshot string of the values that affect the UI.
+    // If nothing has changed since last render, skip rebuilding the DOM.
+    const snapshot = `${count}-${bonus}-${canPrestige}`;
+    if (snapshot === lastPrestigeSnapshot) return;
+    lastPrestigeSnapshot = snapshot;
 
     container.innerHTML = `
         <div id="prestige-info">
