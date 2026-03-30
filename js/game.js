@@ -14,9 +14,9 @@ const state = {
         shadowScholar: 0
     },
     prestige: {
-        count: 0,           // how many times the player has prestiged
-        bonus: 1.0,         // multiplier applied to all knowledge gain
-        threshold: 10000    // knowledge needed to prestige
+        count: 0,
+        bonus: 1.0,
+        threshold: 10000
     }
 };
 
@@ -29,7 +29,7 @@ const upgradeDefs = [
         name: "Quill Scribe",
         description: "A scribe who copies fragments endlessly.",
         baseCost: 10,
-        kps: 0.1        // knowledge per second per level
+        kps: 0.1
     },
     {
         id: "dustReader",
@@ -49,13 +49,11 @@ const upgradeDefs = [
 
 // --- DOM REFERENCES ---
 // We grab references to the HTML elements once and reuse them.
-// This is faster than searching the DOM every frame.
 const knowledgeCountEl = document.getElementById("knowledge-count");
 const fpsEl = document.getElementById("fps");
 const clickBtn = document.getElementById("click-btn");
 
 // --- CLICK HANDLER ---
-// Called every time the player clicks the main button.
 clickBtn.addEventListener("click", () => {
     const gained = state.knowledgePerClick * state.prestige.bonus;
     state.knowledge += gained;
@@ -66,7 +64,6 @@ clickBtn.addEventListener("click", () => {
 
 // --- PASSIVE INCOME LOOP ---
 // Runs every second and adds knowledge based on knowledgePerSecond.
-// setInterval calls a function repeatedly at a fixed interval (in ms).
 setInterval(() => {
     if (state.knowledgePerSecond > 0) {
         const gained = state.knowledgePerSecond * state.prestige.bonus;
@@ -75,7 +72,7 @@ setInterval(() => {
         updateDisplay();
         checkMilestones();
     }
-}, 1000);;
+}, 1000);
 
 // --- DISPLAY UPDATE ---
 // Updates all visible numbers on the page to match the current state.
@@ -87,16 +84,12 @@ function updateDisplay() {
 }
 
 // --- UPGRADE COST CALCULATOR ---
-// The cost of each upgrade increases by 15% per level owned.
-// This is the standard "scaling cost" formula used in most clicker games.
-// It ensures the game stays challenging as you progress.
+// Cost increases by 15% per level owned — standard clicker scaling formula.
 function getUpgradeCost(def) {
     return Math.floor(def.baseCost * Math.pow(1.15, state.upgrades[def.id]));
 }
 
 // --- UPGRADE PURCHASE ---
-// Called when the player clicks an upgrade button.
-// Deducts cost, increments level, recalculates passive income.
 function buyUpgrade(defId) {
     const def = upgradeDefs.find(d => d.id === defId);
     const cost = getUpgradeCost(def);
@@ -110,8 +103,6 @@ function buyUpgrade(defId) {
 }
 
 // --- KPS RECALCULATOR ---
-// Recalculates total knowledge per second from all owned upgrades.
-// Called every time an upgrade is purchased.
 function recalculateKps() {
     let total = 0;
     upgradeDefs.forEach(def => {
@@ -121,8 +112,6 @@ function recalculateKps() {
 }
 
 // --- UPGRADE RENDERER ---
-// Dynamically builds the upgrade shop from upgradeDefs.
-// This means adding a new upgrade only requires adding to upgradeDefs.
 function renderUpgrades() {
     let container = document.getElementById("upgrade-container");
     if (!container) {
@@ -151,8 +140,6 @@ function renderUpgrades() {
 }
 
 // --- MILESTONE CHECKER ---
-// Checks if the player has reached a knowledge threshold.
-// This is where we will later trigger AI-generated lore events.
 const milestonesReached = new Set();
 const milestones = [10, 50, 100, 500, 1000, 5000, 10000];
 
@@ -165,11 +152,7 @@ function checkMilestones() {
     });
 }
 
-// --- LORE EVENT TRIGGER ---
-// Placeholder for now. Later this will call the Cloudflare Worker
-// to get an AI-generated lore fragment from the Anthropic API.
 // --- LORE PANEL DISPLAY ---
-// Shows the lore panel and populates it with AI-generated text.
 function showLore(text) {
     let panel = document.getElementById("lore-panel");
     if (!panel) {
@@ -188,21 +171,19 @@ function showLore(text) {
         .trim();
 
     document.getElementById("lore-text").textContent = clean;
-    // A minimal timeout forces the browser to register the opacity: 0 state
-// before adding the visible class, enabling the fade-in transition.
-requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-        panel.classList.add("visible");
-    });
-});
 
-    // Hide the panel after 12 seconds so it doesn't clutter the screen.
+    // Double requestAnimationFrame ensures fade-in transition works correctly.
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            panel.classList.add("visible");
+        });
+    });
+
+    // Hide after 12 seconds.
     setTimeout(() => panel.classList.remove("visible"), 12000);
 }
 
 // --- LORE EVENT TRIGGER ---
-// Calls the Cloudflare Worker which calls Anthropic and returns a lore fragment.
-// Using async/await to handle the asynchronous API call cleanly.
 async function triggerLoreEvent(milestone) {
     try {
         const response = await fetch("https://archivist-proxy.ap24004.workers.dev/", {
@@ -218,13 +199,11 @@ async function triggerLoreEvent(milestone) {
         showLore(data.lore);
 
     } catch (err) {
-        // Fail silently - if the API call fails, the game continues normally.
         console.log("Lore generation failed:", err);
     }
 }
+
 // --- PRESTIGE RENDERER ---
-// Shows the prestige button when the player has enough knowledge.
-// Displays current prestige count and next bonus.
 function renderPrestige() {
     let container = document.getElementById("prestige-container");
     if (!container) {
@@ -234,9 +213,6 @@ function renderPrestige() {
     }
 
     const { count, bonus, threshold } = state.prestige;
-    const canPrestige = state.knowledge >= threshold;
-    const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
-
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
 
@@ -257,14 +233,11 @@ function renderPrestige() {
 }
 
 // --- PRESTIGE ACTION ---
-// Resets the run but preserves and increases the bonus multiplier.
-// Triggers a special AI lore event themed around the new descent level.
 function doPrestige() {
     state.prestige.count++;
     state.prestige.bonus += 0.5;
     state.prestige.threshold = Math.floor(state.prestige.threshold * 2);
 
-    // Reset run state
     state.knowledge = 0;
     state.knowledgePerClick = 1;
     state.knowledgePerSecond = 0;
@@ -273,20 +246,17 @@ function doPrestige() {
     state.upgrades.dustReader = 0;
     state.upgrades.shadowScholar = 0;
 
-    // Reset milestones so lore fires again on the new run
     milestonesReached.clear();
 
-    // Trigger a special prestige lore event
     triggerPrestigeLore(state.prestige.count);
 
-    updateDisplay();
-    
     // Save immediately after prestige so the descent level is never lost.
     saveGame();
+
+    updateDisplay();
 }
 
 // --- PRESTIGE LORE ---
-// Calls the Worker with prestige context for a darker, deeper lore fragment.
 async function triggerPrestigeLore(descentLevel) {
     try {
         const response = await fetch("https://archivist-proxy.ap24004.workers.dev/", {
@@ -308,8 +278,6 @@ async function triggerPrestigeLore(descentLevel) {
 }
 
 // --- SAVE SYSTEM ---
-// Saves the entire game state to localStorage as a JSON string.
-// localStorage can only store strings, so we serialize with JSON.stringify.
 function saveGame() {
     const saveData = {
         knowledge: state.knowledge,
@@ -325,8 +293,6 @@ function saveGame() {
 }
 
 // --- LOAD SYSTEM ---
-// Loads saved data from localStorage on startup.
-// If no save exists, the game starts fresh.
 function loadGame() {
     const raw = localStorage.getItem("archivist_save");
     if (!raw) return;
@@ -341,11 +307,36 @@ function loadGame() {
         state.upgrades = saved.upgrades || state.upgrades;
         state.prestige = saved.prestige || state.prestige;
 
-        // Restore milestones so lore doesn't fire again for already-seen ones.
         if (saved.milestonesReached) {
-            saved.milestonesReached.forEach(m =
+            saved.milestonesReached.forEach(m => milestonesReached.add(m));
+        }
+
+        recalculateKps();
+
+    } catch (err) {
+        console.log("Save data corrupted, starting fresh:", err);
+        localStorage.removeItem("archivist_save");
+    }
+}
+
+// --- SAVE INDICATOR ---
+function showSaveIndicator() {
+    let indicator = document.getElementById("save-indicator");
+    if (!indicator) {
+        indicator = document.createElement("div");
+        indicator.id = "save-indicator";
+        document.getElementById("game-container").appendChild(indicator);
+    }
+    indicator.textContent = "✦ Progress saved ✦";
+    indicator.classList.add("visible");
+    setTimeout(() => indicator.classList.remove("visible"), 2000);
+}
+
+// --- AUTOSAVE ---
+// Saves automatically every 30 seconds.
+setInterval(saveGame, 30000);
+
 // --- INIT ---
-// Starts the game by rendering the initial state.
 // Load any existing save, then render the initial state.
 loadGame();
 updateDisplay();
