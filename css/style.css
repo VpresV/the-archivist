@@ -345,3 +345,11 @@ body {
     color: #c9a96e;
     font-style: normal;
 }
+
+/* Next unlock hint */
+#next-unlock-info {
+    font-size: 0.85rem;
+    color: #5a3e1b;
+    font-style: italic;
+    letter-spacing: 1px;
+}
