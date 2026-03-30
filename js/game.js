@@ -103,6 +103,9 @@ function recalculateKps() {
 }
 
 // --- UPGRADE RENDERER ---
+// Builds upgrade buttons once, then only updates text and classes in place.
+let upgradesBuilt = false;
+
 function renderUpgrades() {
     let container = document.getElementById("upgrade-container");
     if (!container) {
@@ -111,22 +114,33 @@ function renderUpgrades() {
         document.getElementById("game-container").appendChild(container);
     }
 
-    container.innerHTML = "";
+    // Build buttons once only.
+    if (!upgradesBuilt) {
+        upgradeDefs.forEach(def => {
+            const btn = document.createElement("button");
+            btn.className = "upgrade-btn";
+            btn.id = `upgrade-${def.id}`;
+            btn.onclick = () => buyUpgrade(def.id);
+            container.appendChild(btn);
+        });
+        upgradesBuilt = true;
+    }
 
+    // After first build, only update text content and affordability class.
     upgradeDefs.forEach(def => {
         const cost = getUpgradeCost(def);
         const owned = state.upgrades[def.id];
         const canAfford = state.knowledge >= cost;
 
-        const btn = document.createElement("button");
+        const btn = document.getElementById(`upgrade-${def.id}`);
+        if (!btn) return;
+
         btn.className = "upgrade-btn" + (canAfford ? " affordable" : "");
         btn.innerHTML = `
             <strong>${def.name}</strong> (owned: ${owned})<br/>
             <small>${def.description}</small><br/>
             Cost: ${cost} knowledge
         `;
-        btn.onclick = () => buyUpgrade(def.id);
-        container.appendChild(btn);
     });
 }
 
