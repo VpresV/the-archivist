@@ -948,18 +948,13 @@ function spawnFloatNumber(e, amount) {
     setTimeout(() => el.remove(), 1000);
 }
 
-// --- CLICK ANIMATION: RIPPLE ---
+// --- CLICK ANIMATION: GLOW PULSE ---
+// Briefly intensifies the button glow on click.
+// More atmospheric than a ripple for a dark parchment game.
 function spawnRipple(e) {
     const btn = document.getElementById("click-btn");
-    const ripple = document.createElement("span");
-    ripple.className = "ripple";
-    const rect = btn.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = size + "px";
-    ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
-    ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
-    btn.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
+    btn.classList.add("clicked");
+    setTimeout(() => btn.classList.remove("clicked"), 150);
 }
 
 // --- UTILITY: FADE IN ---
