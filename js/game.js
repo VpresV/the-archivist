@@ -180,7 +180,13 @@ function showLore(text) {
         .trim();
 
     document.getElementById("lore-text").textContent = clean;
-    panel.classList.add("visible");
+    // A minimal timeout forces the browser to register the opacity: 0 state
+// before adding the visible class, enabling the fade-in transition.
+requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+        panel.classList.add("visible");
+    });
+});
 
     // Hide the panel after 12 seconds so it doesn't clutter the screen.
     setTimeout(() => panel.classList.remove("visible"), 12000);
