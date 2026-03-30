@@ -869,4 +869,37 @@ function fadeIn(el) {
 
 // --- UTILITY: REMOVE OVERLAY ---
 function removeOverlay(id) {
-    const el =
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove("visible");
+        setTimeout(() => {
+            if (el.parentNode) el.parentNode.removeChild(el);
+        }, 600);
+    }
+}
+
+// --- HOW TO PLAY TOGGLE ---
+const htpContent = document.getElementById("htp-content");
+const htpToggle = document.getElementById("htp-toggle");
+
+if (localStorage.getItem("htp_dismissed")) {
+    htpContent.style.display = "none";
+    htpToggle.textContent = "How to Play ▸";
+}
+
+htpToggle.addEventListener("click", () => {
+    const isVisible = htpContent.style.display !== "none";
+    if (isVisible) {
+        htpContent.style.display = "none";
+        htpToggle.textContent = "How to Play ▸";
+        localStorage.setItem("htp_dismissed", "1");
+    } else {
+        htpContent.style.display = "block";
+        htpToggle.textContent = "How to Play ▾";
+        localStorage.removeItem("htp_dismissed");
+    }
+});
+
+// --- INIT ---
+loadGame();
+updateDisplay();
