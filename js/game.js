@@ -29,7 +29,6 @@ const state = {
     ritualAvailable: false,
     endingSeen: false,
     ngPlus: false,
-    // Baseline kps from Codex NG+ reward.
     baselineKps: 0
 };
 
@@ -117,7 +116,6 @@ clickBtn.addEventListener("click", () => {
 
 // --- PASSIVE INCOME LOOP ---
 setInterval(() => {
-    // Include baseline kps from Codex NG+ reward.
     const total = state.knowledgePerSecond + state.baselineKps;
     if (total > 0) {
         const gained = total * state.prestige.bonus;
@@ -135,12 +133,10 @@ function updateDisplay() {
     fpsEl.textContent = isNaN(kps) ? "0.0" : kps.toFixed(1);
     renderUpgrades();
     renderPrestige();
-    renderMark();
-    renderNgPlusIndicator();
+    renderStatusIndicator();
 }
 
 // --- UPGRADE COST CALCULATOR ---
-// In NG+ all upgrade costs are 50% higher.
 function getUpgradeCost(def) {
     const owned = state.upgrades[def.id] || 0;
     const base = state.ngPlus ? Math.floor(def.baseCost * 1.5) : def.baseCost;
@@ -378,7 +374,6 @@ function doPrestige() {
     upgradesBuilt = false;
     state.ritualAvailable = false;
 
-    // Ritual unlock threshold — descent 8 in NG+, descent 5 normally.
     const ritualUnlockThreshold = state.ngPlus ? 8 : 5;
 
     if (state.prestige.count > ritualUnlockThreshold) {
@@ -390,7 +385,6 @@ function doPrestige() {
         }
     }
 
-    // True ending at descent 15 — no warning, just hits.
     if (state.prestige.count >= 15 && !state.endingSeen) {
         saveGame();
         updateDisplay();
@@ -467,7 +461,6 @@ function showRitualOverlay() {
 function showBanishmentOverlay() {
     removeOverlay("banishment-overlay");
 
-    // NG+ requires 50% more clicks to banish.
     const baseClicks = 50 + (state.prestige.count * 10);
     const requiredClicks = state.ngPlus ? Math.floor(baseClicks * 1.5) : baseClicks;
     let currentClicks = 0;
@@ -653,7 +646,6 @@ function claimReward(rewardId) {
     state.hollowKingRewards[rewardId] = true;
     state.ritualAvailable = false;
 
-    // Apply reward effects — NG+ rewards are stronger.
     if (rewardId === "gift") {
         state.prestige.bonus *= state.ngPlus ? 5 : 3;
     }
@@ -708,41 +700,36 @@ async function triggerCodexLore() {
     }
 }
 
-// --- ARCHIVIST'S MARK RENDERER ---
-function renderMark() {
-    if (!state.hollowKingRewards.mark) return;
+// --- STATUS INDICATOR RENDERER ---
+// Merges Mark and NG+ indicators into a single line below the title.
+function renderStatusIndicator() {
+    let indicator = document.getElementById("status-indicator");
 
-    let mark = document.getElementById("archivist-mark");
-    if (mark) return;
+    const hasMark = state.hollowKingRewards.mark;
+    const hasNgPlus = state.ngPlus;
 
-    mark = document.createElement("div");
-    mark.id = "archivist-mark";
-    mark.innerHTML = `✦ <span>Marked by the Archive</span> ✦`;
+    if (!hasMark && !hasNgPlus) return;
 
-    const knowledgeDisplay = document.getElementById("knowledge-display");
-    if (knowledgeDisplay) {
-        document.getElementById("game-container").insertBefore(mark, knowledgeDisplay);
-    } else {
-        document.getElementById("game-container").appendChild(mark);
+    if (!indicator) {
+        indicator = document.createElement("div");
+        indicator.id = "status-indicator";
+        const title = document.getElementById("game-title");
+        if (title && title.nextSibling) {
+            document.getElementById("game-container").insertBefore(indicator, title.nextSibling);
+        } else {
+            document.getElementById("game-container").appendChild(indicator);
+        }
     }
-}
 
-// --- NG+ INDICATOR RENDERER ---
-function renderNgPlusIndicator() {
-    if (!state.ngPlus) return;
-
-    let indicator = document.getElementById("ngplus-indicator");
-    if (indicator) return;
-
-    indicator = document.createElement("div");
-    indicator.id = "ngplus-indicator";
-    indicator.textContent = "✦ It Did Not Stay Closed ✦";
-
-    const title = document.getElementById("game-title");
-    if (title && title.nextSibling) {
-        document.getElementById("game-container").insertBefore(indicator, title.nextSibling);
-    } else {
-        document.getElementById("game-container").appendChild(indicator);
+    if (hasMark && hasNgPlus) {
+        indicator.textContent = "✦ Marked. It Did Not Stay Closed ✦";
+        indicator.className = "status-indicator-ngplus";
+    } else if (hasNgPlus) {
+        indicator.textContent = "✦ It Did Not Stay Closed ✦";
+        indicator.className = "status-indicator-ngplus";
+    } else if (hasMark) {
+        indicator.textContent = "✦ Marked by the Archive ✦";
+        indicator.className = "status-indicator-mark";
     }
 }
 
@@ -783,13 +770,11 @@ function showTrueEnding() {
     document.body.appendChild(overlay);
     fadeIn(overlay);
 
-    // Close the Archive — total wipe, fresh start.
     document.getElementById("ending-close-btn").onclick = () => {
         localStorage.clear();
         location.reload();
     };
 
-    // What Lies Below Awakens — New Game+ with preserved rewards.
     document.getElementById("ending-ngplus-btn").onclick = () => {
         const preserved = {
             hollowKingRewards: { ...state.hollowKingRewards },
@@ -861,7 +846,6 @@ function saveGame() {
 
 // --- LOAD SYSTEM ---
 function loadGame() {
-    // Check for preserved data from true ending choices.
     const preservedRaw = localStorage.getItem("archivist_preserved");
     if (preservedRaw) {
         try {
