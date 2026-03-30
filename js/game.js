@@ -124,26 +124,39 @@ function getAudioContext() {
     return audioCtx;
 }
 
-// Click sound — soft low thud, like a heavy book closing.
+// Click sound — dry papery scratch, like a quill on parchment.
 function playClickSound() {
     if (!soundEnabled) return;
     try {
         const ctx = getAudioContext();
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
 
-        oscillator.connect(gainNode);
+        // White noise burst filtered to sound dry and papery.
+        const bufferSize = ctx.sampleRate * 0.08;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1);
+        }
+
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+
+        // Bandpass filter to keep only the papery mid frequencies.
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 3000;
+        filter.Q.value = 0.8;
+
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0.18, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+
+        source.connect(filter);
+        filter.connect(gainNode);
         gainNode.connect(ctx.destination);
 
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(120, ctx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.1);
-
-        gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.15);
+        source.start(ctx.currentTime);
+        source.stop(ctx.currentTime + 0.08);
     } catch (e) {}
 }
 
