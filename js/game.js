@@ -123,7 +123,8 @@ setInterval(() => {
 // --- DISPLAY UPDATE ---
 function updateDisplay() {
     knowledgeCountEl.textContent = Math.floor(state.knowledge);
-    fpsEl.textContent = (state.knowledgePerSecond * state.prestige.bonus).toFixed(1);
+    const kps = state.knowledgePerSecond * (state.prestige.bonus || 1);
+    fpsEl.textContent = isNaN(kps) ? "0.0" : kps.toFixed(1);
     renderUpgrades();
     renderPrestige();
 }
