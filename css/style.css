@@ -164,3 +164,51 @@ body {
     font-family: 'Cinzel Decorative', cursive;
     font-size: 1.3rem;
     color:
+/* Prestige UI */
+#prestige-container {
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+#prestige-info {
+    font-size: 0.95rem;
+    color: #6b5030;
+    letter-spacing: 1px;
+    font-style: italic;
+}
+
+#prestige-info span {
+    color: #c9a96e;
+    font-style: normal;
+    font-weight: 600;
+}
+
+#prestige-btn {
+    background: linear-gradient(145deg, #1a0000, #2d0a00);
+    color: #e87a7a;
+    border: 1px solid #5a1b1b;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    padding: 14px 32px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 15px rgba(200, 50, 50, 0.1);
+}
+
+#prestige-btn:hover {
+    background: linear-gradient(145deg, #2d0a00, #4a1000);
+    box-shadow: 0 0 25px rgba(200, 50, 50, 0.3);
+    color: #ffaaaa;
+    transform: translateY(-1px);
+}
+
+#prestige-btn:active {
+    transform: translateY(1px);
+}
