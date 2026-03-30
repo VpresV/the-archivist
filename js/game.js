@@ -365,7 +365,6 @@ function showLore(title, text) {
         .replace(/\*/g, "")
         .trim();
 
-    // Add to lore log — newest first, max 20 entries.
     state.loreLog.unshift({ title: cleanTitle, text: cleanText });
     if (state.loreLog.length > 20) state.loreLog.pop();
 
@@ -1215,6 +1214,86 @@ if (loreArchiveBtn) {
     });
 }
 
+// --- DAILY BONUS ---
+function checkDailyBonus() {
+    const today = new Date().toDateString();
+    const lastVisit = localStorage.getItem("archivist_last_visit");
+
+    if (lastVisit !== today) {
+        localStorage.setItem("archivist_last_visit", today);
+        if (lastVisit) {
+            setTimeout(() => showDailyBonus(), 1500);
+        }
+    }
+}
+
+function showDailyBonus() {
+    const overlay = document.createElement("div");
+    overlay.id = "daily-bonus-overlay";
+    overlay.className = "overlay-screen";
+    overlay.innerHTML = `
+        <div class="overlay-box">
+            <div class="overlay-title">The Archive Stirs</div>
+            <div class="overlay-text">
+                You have returned.<br><br>
+                The archive remembers those who come back. For the next
+                three minutes, every fragment carries twice its weight.<br><br>
+                <em>The darkness welcomes your return.</em>
+            </div>
+            <div class="overlay-buttons">
+                <button id="daily-bonus-btn">Begin</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    fadeIn(overlay);
+
+    document.getElementById("daily-bonus-btn").onclick = () => {
+        removeOverlay("daily-bonus-overlay");
+        activateDailyBonus();
+    };
+}
+
+function activateDailyBonus() {
+    state.prestige.bonus *= 2;
+    updateDisplay();
+    showDailyBonusTimer();
+
+    setTimeout(() => {
+        state.prestige.bonus /= 2;
+        updateDisplay();
+        removeDailyBonusTimer();
+    }, 180000);
+}
+
+function showDailyBonusTimer() {
+    let timer = document.getElementById("daily-bonus-timer");
+    if (!timer) {
+        timer = document.createElement("div");
+        timer.id = "daily-bonus-timer";
+        const knowledgeDisplay = document.getElementById("knowledge-display");
+        if (knowledgeDisplay && knowledgeDisplay.nextSibling) {
+            document.getElementById("game-container").insertBefore(timer, knowledgeDisplay.nextSibling);
+        }
+    }
+
+    let secondsLeft = 180;
+    timer.textContent = `✦ Daily blessing: ${secondsLeft}s remaining ✦`;
+
+    const interval = setInterval(() => {
+        secondsLeft--;
+        if (timer) timer.textContent = `✦ Daily blessing: ${secondsLeft}s remaining ✦`;
+        if (secondsLeft <= 0) clearInterval(interval);
+    }, 1000);
+}
+
+function removeDailyBonusTimer() {
+    const timer = document.getElementById("daily-bonus-timer");
+    if (timer) timer.remove();
+}
+
 // --- INIT ---
 loadGame();
+checkDailyBonus();
 updateDisplay();
