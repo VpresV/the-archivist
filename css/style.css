@@ -1,6 +1,6 @@
 /* The Archivist - Stylesheet */
 
-@import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 
 * {
     margin: 0;
@@ -30,7 +30,7 @@ body {
 }
 
 #game-title {
-    font-family: 'UnifrakturMaguntia', cursive;
+    font-family: 'Cinzel Decorative', cursive;
     font-size: 4rem;
     color: #e8c87a;
     text-shadow: 
@@ -158,6 +158,6 @@ body {
 }
 
 #lore-title {
-    font-family: 'UnifrakturMaguntia', cursive;
+    font-family: 'Cinzel Decorative', cursive;
     font-size: 1.3rem;
     color:
