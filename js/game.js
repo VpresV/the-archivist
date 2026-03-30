@@ -653,7 +653,7 @@ function claimReward(rewardId) {
         } else if (rewardId === "gift") {
             showLore("The Hollow Gift", "The King left a splinter of himself behind. It settled somewhere behind your eyes. The fragments come faster now — as if they were always yours to begin with.");
         }
-    }, 800);
+    }, 400);
 }
 
 // --- CODEX LORE ---
@@ -676,6 +676,7 @@ async function triggerCodexLore() {
 }
 
 // --- ARCHIVIST'S MARK RENDERER ---
+// Shows a permanent golden sigil below the game title.
 function renderMark() {
     if (!state.hollowKingRewards.mark) return;
 
@@ -685,10 +686,14 @@ function renderMark() {
     mark = document.createElement("div");
     mark.id = "archivist-mark";
     mark.innerHTML = `✦ <span>Marked by the Archive</span> ✦`;
-    document.getElementById("game-container").insertBefore(
-        mark,
-        document.getElementById("game-container").firstChild.nextSibling
-    );
+
+    // Insert after the title, before the knowledge display.
+    const knowledgeDisplay = document.getElementById("knowledge-display");
+    if (knowledgeDisplay) {
+        document.getElementById("game-container").insertBefore(mark, knowledgeDisplay);
+    } else {
+        document.getElementById("game-container").appendChild(mark);
+    }
 }
 
 // --- TRUE ENDING ---
