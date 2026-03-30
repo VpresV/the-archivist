@@ -40,6 +40,24 @@ body {
     text-align: center;
 }
 
+/* Status indicator — Mark and NG+ merged */
+#status-indicator {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-align: center;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.status-indicator-mark {
+    color: #e8c87a;
+}
+
+.status-indicator-ngplus {
+    color: #8a3a3a;
+}
+
 #knowledge-display {
     font-size: 1.4rem;
     color: #a08050;
@@ -50,20 +68,6 @@ body {
     color: #e8c87a;
     font-weight: 600;
     font-size: 1.6rem;
-}
-
-/* Archivist's Mark */
-#archivist-mark {
-    font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    color: #e8c87a;
-    letter-spacing: 3px;
-    text-align: center;
-    opacity: 0.8;
-}
-
-#archivist-mark span {
-    font-style: italic;
 }
 
 #click-btn {
@@ -503,7 +507,7 @@ body {
     border-color: #5a3e1b;
 }
 
-/* Ritual confirm button — more prominent */
+/* Ritual confirm button */
 #ritual-confirm-btn {
     background: linear-gradient(145deg, #0a001a, #1a0030) !important;
     color: #c87ae8 !important;
@@ -633,15 +637,4 @@ body {
 .ending-text em {
     color: #e8c87a !important;
     font-size: 1.2rem !important;
-}
-
-/* NG+ indicator */
-#ngplus-indicator {
-    font-family: 'Crimson Text', serif;
-    font-size: 0.8rem;
-    color: #8a3a3a;
-    letter-spacing: 3px;
-    text-align: center;
-    font-style: italic;
-    opacity: 0.8;
 }
