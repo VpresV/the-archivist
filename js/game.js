@@ -322,6 +322,30 @@ function showSaveIndicator() {
 // --- AUTOSAVE ---
 setInterval(saveGame, 30000);
 
+// --- HOW TO PLAY TOGGLE ---
+// Collapses and expands the how to play section.
+// Hidden by default after first visit using localStorage.
+const htpContent = document.getElementById("htp-content");
+const htpToggle = document.getElementById("htp-toggle");
+
+if (localStorage.getItem("htp_dismissed")) {
+    htpContent.style.display = "none";
+    htpToggle.textContent = "How to Play ▸";
+}
+
+htpToggle.addEventListener("click", () => {
+    const isVisible = htpContent.style.display !== "none";
+    if (isVisible) {
+        htpContent.style.display = "none";
+        htpToggle.textContent = "How to Play ▸";
+        localStorage.setItem("htp_dismissed", "1");
+    } else {
+        htpContent.style.display = "block";
+        htpToggle.textContent = "How to Play ▾";
+        localStorage.removeItem("htp_dismissed");
+    }
+});
+
 // --- INIT ---
 loadGame();
 updateDisplay();
