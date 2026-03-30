@@ -130,9 +130,9 @@ function updateDisplay() {
 }
 
 // --- UPGRADE COST CALCULATOR ---
-// Cost increases by 15% per level owned — standard clicker scaling formula.
 function getUpgradeCost(def) {
-    return Math.floor(def.baseCost * Math.pow(1.15, state.upgrades[def.id]));
+    const owned = state.upgrades[def.id] || 0;
+    return Math.floor(def.baseCost * Math.pow(1.15, owned));
 }
 
 // --- UPGRADE AVAILABILITY CHECK ---
@@ -410,11 +410,20 @@ function loadGame() {
         state.knowledgePerClick = saved.knowledgePerClick || 1;
         state.knowledgePerSecond = saved.knowledgePerSecond || 0;
         state.totalEarned = saved.totalEarned || 0;
-        state.upgrades = saved.upgrades || state.upgrades;
         state.prestige = saved.prestige || state.prestige;
+
+        // Migrate upgrades safely — merge saved values into the current
+        // upgrade structure so new upgrades default to 0 if missing from save.
+        if (saved.upgrades) {
+            Object.keys(state.upgrades).forEach(key => {
+                state.upgrades[key] = saved.upgrades[key] || 0;
+            });
+        }
+
         if (saved.milestonesReached) {
             saved.milestonesReached.forEach(m => milestonesReached.add(m));
         }
+
         recalculateKps();
     } catch (err) {
         console.log("Save data corrupted, starting fresh:", err);
