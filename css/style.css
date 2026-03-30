@@ -295,6 +295,23 @@ body {
     border-color: #5a3e1b;
 }
 
+#sound-btn {
+    background: transparent;
+    color: #4a3020;
+    border: 1px solid #2a1a08;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    padding: 8px 20px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+#sound-btn:hover {
+    color: #6b5030;
+    border-color: #3a2a10;
+}
+
 #save-indicator {
     font-size: 0.85rem;
     color: #6b5030;
