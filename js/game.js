@@ -29,7 +29,14 @@ const state = {
     ritualAvailable: false,
     endingSeen: false,
     ngPlus: false,
-    baselineKps: 0
+    baselineKps: 0,
+    // Lifetime statistics — never reset.
+    stats: {
+        totalFragmentsEver: 0,
+        totalDescents: 0,
+        hollowKingDefeats: 0,
+        sessionStart: Date.now()
+    }
 };
 
 // --- UPGRADE DEFINITIONS ---
@@ -130,7 +137,6 @@ function playLoreSound() {
     try {
         const ctx = getAudioContext();
 
-        // Noise layer — softer, lower frequency, slower attack.
         const bufferSize = ctx.sampleRate * 0.6;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -141,7 +147,6 @@ function playLoreSound() {
         const noiseSource = ctx.createBufferSource();
         noiseSource.buffer = buffer;
 
-        // Lower frequency bandpass — more like old parchment than crisp paper.
         const noiseFilter = ctx.createBiquadFilter();
         noiseFilter.type = "bandpass";
         noiseFilter.frequency.value = 800;
@@ -157,7 +162,6 @@ function playLoreSound() {
         noiseFilter.connect(noiseGain);
         noiseGain.connect(ctx.destination);
 
-        // Resonance layer — deeper and quieter.
         const resonator = ctx.createOscillator();
         const resGain = ctx.createGain();
 
@@ -209,11 +213,11 @@ clickBtn.addEventListener("click", (e) => {
     const gained = state.knowledgePerClick * state.prestige.bonus;
     state.knowledge += gained;
     state.totalEarned += gained;
+    state.stats.totalFragmentsEver += gained;
     updateDisplay();
     checkMilestones();
     spawnFloatNumber(e, gained);
     spawnRipple(e);
-    playClickSound();
 });
 
 // --- PASSIVE INCOME LOOP ---
@@ -223,6 +227,7 @@ setInterval(() => {
         const gained = total * state.prestige.bonus;
         state.knowledge += gained;
         state.totalEarned += gained;
+        state.stats.totalFragmentsEver += gained;
         updateDisplay();
         checkMilestones();
     }
@@ -460,7 +465,6 @@ function renderPrestige() {
     const ritualBtn = document.getElementById("ritual-btn");
     ritualBtn.style.display = state.ritualAvailable ? "inline-block" : "none";
 
-    // Sync sound button label with current state.
     const soundBtn = document.getElementById("sound-btn");
     if (soundBtn) soundBtn.textContent = soundEnabled ? "Sound: On" : "Sound: Off";
 }
@@ -469,6 +473,7 @@ function renderPrestige() {
 function doPrestige() {
     playPrestigeSound();
     state.prestige.count++;
+    state.stats.totalDescents++;
     state.prestige.bonus += 0.5;
     state.prestige.threshold = Math.floor(state.prestige.threshold * 2.5);
 
@@ -754,6 +759,11 @@ function showVictoryOverlay() {
 
 // --- CLAIM REWARD ---
 function claimReward(rewardId) {
+    // Track Hollow King defeat — only count once per victory.
+    if (!state.hollowKingRewards[rewardId]) {
+        state.stats.hollowKingDefeats++;
+    }
+
     state.hollowKingRewards[rewardId] = true;
     state.ritualAvailable = false;
 
@@ -931,6 +941,37 @@ function showSupportOverlay() {
     };
 }
 
+// --- STATISTICS PANEL ---
+function renderStats() {
+    const panel = document.getElementById("stats-panel");
+    if (!panel) return;
+
+    const sessionSeconds = Math.floor((Date.now() - state.stats.sessionStart) / 1000);
+    const sessionMinutes = Math.floor(sessionSeconds / 60);
+    const sessionHours = Math.floor(sessionMinutes / 60);
+    const timeStr = sessionHours > 0
+        ? `${sessionHours}h ${sessionMinutes % 60}m`
+        : sessionMinutes > 0
+            ? `${sessionMinutes}m ${sessionSeconds % 60}s`
+            : `${sessionSeconds}s`;
+
+    const rewardsList = [
+        state.hollowKingRewards.codex ? "The Forbidden Codex" : null,
+        state.hollowKingRewards.mark ? "The Archivist's Mark" : null,
+        state.hollowKingRewards.gift ? "The Hollow Gift" : null
+    ].filter(Boolean);
+
+    panel.innerHTML = `
+        <div class="stats-row"><span>Fragments recovered (lifetime)</span><span>${formatNumber(state.stats.totalFragmentsEver)}</span></div>
+        <div class="stats-row"><span>Descents completed</span><span>${state.stats.totalDescents}</span></div>
+        <div class="stats-row"><span>Hollow King defeats</span><span>${state.stats.hollowKingDefeats}</span></div>
+        <div class="stats-row"><span>Rewards claimed</span><span>${rewardsList.length > 0 ? rewardsList.join(", ") : "None"}</span></div>
+        <div class="stats-row"><span>Current descent level</span><span>${state.prestige.count}</span></div>
+        <div class="stats-row"><span>Session time</span><span>${timeStr}</span></div>
+        ${state.ngPlus ? `<div class="stats-row ngplus-row"><span>Mode</span><span>Second Archive</span></div>` : ""}
+    `;
+}
+
 // --- SAVE SYSTEM ---
 function saveGame() {
     const saveData = {
@@ -945,6 +986,7 @@ function saveGame() {
         endingSeen: state.endingSeen,
         ngPlus: state.ngPlus,
         baselineKps: state.baselineKps,
+        stats: state.stats,
         milestonesReached: Array.from(milestonesReached)
     };
     localStorage.setItem("archivist_save", JSON.stringify(saveData));
@@ -985,6 +1027,13 @@ function loadGame() {
         state.ngPlus = saved.ngPlus || false;
         state.baselineKps = saved.baselineKps || 0;
 
+        if (saved.stats) {
+            state.stats.totalFragmentsEver = saved.stats.totalFragmentsEver || 0;
+            state.stats.totalDescents = saved.stats.totalDescents || 0;
+            state.stats.hollowKingDefeats = saved.stats.hollowKingDefeats || 0;
+        }
+        state.stats.sessionStart = Date.now();
+
         if (saved.upgrades) {
             Object.keys(state.upgrades).forEach(key => {
                 state.upgrades[key] = saved.upgrades[key] || 0;
@@ -995,7 +1044,6 @@ function loadGame() {
             saved.milestonesReached.forEach(m => milestonesReached.add(m));
         }
 
-        // Restore sound preference.
         soundEnabled = localStorage.getItem("archivist_sound") === "1";
 
         recalculateKps();
@@ -1110,6 +1158,20 @@ htpToggle.addEventListener("click", () => {
         localStorage.removeItem("htp_dismissed");
     }
 });
+
+// --- STATS BUTTON TOGGLE ---
+const statsBtn = document.getElementById("stats-btn");
+const statsPanel = document.getElementById("stats-panel");
+let statsVisible = false;
+
+if (statsBtn) {
+    statsBtn.addEventListener("click", () => {
+        statsVisible = !statsVisible;
+        statsPanel.style.display = statsVisible ? "block" : "none";
+        statsBtn.textContent = statsVisible ? "Hide Archive Records" : "View Archive Records";
+        if (statsVisible) renderStats();
+    });
+}
 
 // --- INIT ---
 loadGame();
