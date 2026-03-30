@@ -105,6 +105,15 @@ const knowledgeCountEl = document.getElementById("knowledge-count");
 const fpsEl = document.getElementById("fps");
 const clickBtn = document.getElementById("click-btn");
 
+// --- NUMBER FORMATTER ---
+// Converts large numbers to readable shorthand.
+function formatNumber(n) {
+    if (n >= 1000000000) return (n / 1000000000).toFixed(1) + "B";
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+    return Math.floor(n).toString();
+}
+
 // --- CLICK HANDLER ---
 clickBtn.addEventListener("click", (e) => {
     const gained = state.knowledgePerClick * state.prestige.bonus;
@@ -130,7 +139,7 @@ setInterval(() => {
 
 // --- DISPLAY UPDATE ---
 function updateDisplay() {
-    knowledgeCountEl.textContent = Math.floor(state.knowledge);
+    knowledgeCountEl.textContent = formatNumber(state.knowledge);
     const kps = (state.knowledgePerSecond + state.baselineKps) * (state.prestige.bonus || 1);
     fpsEl.textContent = isNaN(kps) ? "0.0" : kps.toFixed(1);
     renderUpgrades();
@@ -214,7 +223,7 @@ function renderUpgrades() {
         btn.innerHTML = `
             <strong>${def.name}</strong> (owned: ${owned})<br/>
             <small>${def.description}</small><br/>
-            Cost: ${cost} knowledge
+            Cost: ${formatNumber(cost)} knowledge
         `;
     });
 }
@@ -435,7 +444,7 @@ function showRitualOverlay() {
                 The archive has been waiting for this moment.<br><br>
                 To call forth what lurks beneath, you must offer something of yourself.
                 The King does not come cheaply.<br><br>
-                <em>Sacrifice: ${Math.floor(sacrifice).toLocaleString()} knowledge</em>
+                <em>Sacrifice: ${formatNumber(Math.floor(sacrifice))} knowledge</em>
             </div>
             <div class="overlay-buttons">
                 <button id="ritual-confirm-btn">Make the Sacrifice</button>
@@ -538,7 +547,7 @@ function showBanishmentFailed() {
             <div class="overlay-text">
                 The darkness was too great. The Hollow King retreated — but not before taking
                 something with him.<br><br>
-                <em>You lost ${penalty.toLocaleString()} knowledge.</em><br><br>
+                <em>You lost ${formatNumber(penalty)} knowledge.</em><br><br>
                 The ritual may be attempted again.
             </div>
             <div class="overlay-buttons">
@@ -704,7 +713,6 @@ async function triggerCodexLore() {
 
 // --- STATUS INDICATOR RENDERER ---
 function renderStatusIndicator() {
-    // Mark — gold achievement badge below the title.
     if (state.hollowKingRewards.mark) {
         let mark = document.getElementById("mark-indicator");
         if (!mark) {
@@ -718,7 +726,6 @@ function renderStatusIndicator() {
         }
     }
 
-    // NG+ warning — dark red dread, below the mark.
     if (state.ngPlus) {
         let ngplus = document.getElementById("ngplus-indicator");
         if (!ngplus) {
@@ -930,6 +937,31 @@ function confirmReset() {
 // --- AUTOSAVE ---
 setInterval(saveGame, 30000);
 
+// --- CLICK ANIMATION: FLOATING NUMBER ---
+function spawnFloatNumber(e, amount) {
+    const el = document.createElement("div");
+    el.className = "float-number";
+    el.textContent = "+" + formatNumber(Math.floor(amount));
+    el.style.left = (e.clientX - 20) + "px";
+    el.style.top = (e.clientY - 10) + "px";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+}
+
+// --- CLICK ANIMATION: RIPPLE ---
+function spawnRipple(e) {
+    const btn = document.getElementById("click-btn");
+    const ripple = document.createElement("span");
+    ripple.className = "ripple";
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
+    ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+}
+
 // --- UTILITY: FADE IN ---
 function fadeIn(el) {
     requestAnimationFrame(() => {
@@ -971,33 +1003,6 @@ htpToggle.addEventListener("click", () => {
         localStorage.removeItem("htp_dismissed");
     }
 });
-
-// --- CLICK ANIMATION: FLOATING NUMBER ---
-// Spawns a number that floats upward from the click position.
-function spawnFloatNumber(e, amount) {
-    const el = document.createElement("div");
-    el.className = "float-number";
-    el.textContent = "+" + formatNumber(Math.floor(amount));
-    el.style.left = (e.clientX - 20) + "px";
-    el.style.top = (e.clientY - 10) + "px";
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1000);
-}
-
-// --- CLICK ANIMATION: RIPPLE ---
-// Spawns a ripple effect on the button at the click position.
-function spawnRipple(e) {
-    const btn = document.getElementById("click-btn");
-    const ripple = document.createElement("span");
-    ripple.className = "ripple";
-    const rect = btn.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = size + "px";
-    ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
-    ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
-    btn.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
-}
 
 // --- INIT ---
 loadGame();
