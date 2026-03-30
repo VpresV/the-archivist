@@ -672,18 +672,10 @@ body {
     overflow: hidden;
 }
 
-#click-btn .ripple {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(232, 200, 122, 0.3);
-    transform: scale(0);
-    animation: rippleEffect 0.6s linear;
-    pointer-events: none;
-}
-
-@keyframes rippleEffect {
-    to {
-        transform: scale(4);
-        opacity: 0;
-    }
+/* Click pulse — subtle glow instead of ripple */
+#click-btn.clicked {
+    box-shadow:
+        0 0 40px rgba(200, 150, 50, 0.5),
+        inset 0 0 15px rgba(200, 150, 50, 0.1);
+    transition: box-shadow 0.05s ease;
 }
