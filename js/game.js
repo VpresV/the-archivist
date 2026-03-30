@@ -357,7 +357,7 @@ function doPrestige() {
     state.prestige.threshold = Math.floor(state.prestige.threshold * 2.5);
 
     state.knowledge = 0;
-    state.knowledgePerClick = 1;
+    state.knowledgePerClick = state.hollowKingRewards.mark ? 2 : 1;
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
 
@@ -566,7 +566,7 @@ function showVictoryOverlay() {
         rewardButtons.push(`
             <button class="reward-btn" id="reward-mark">
                 <strong>The Archivist's Mark</strong><br/>
-                <small>Your name is written in the archive's oldest ink. It will not fade.</small>
+                <small>Your name is written in the archive's oldest ink. It will not fade. Each fragment you recover carries more weight.</small>
             </button>
         `);
     }
@@ -609,7 +609,6 @@ function showVictoryOverlay() {
     document.body.appendChild(overlay);
     fadeIn(overlay);
 
-    // Reward handlers — each closes the overlay immediately on click.
     const codexBtn = document.getElementById("reward-codex");
     if (codexBtn) codexBtn.onclick = () => claimReward("codex");
 
@@ -628,8 +627,6 @@ function showVictoryOverlay() {
 }
 
 // --- CLAIM REWARD ---
-// Claims the chosen reward, closes the overlay immediately,
-// then triggers any associated effects.
 function claimReward(rewardId) {
     state.hollowKingRewards[rewardId] = true;
     state.ritualAvailable = false;
@@ -637,6 +634,9 @@ function claimReward(rewardId) {
     // Apply reward effects.
     if (rewardId === "gift") {
         state.prestige.bonus *= 3;
+    }
+    if (rewardId === "mark") {
+        state.knowledgePerClick += 1;
     }
 
     // Close the victory overlay first, then trigger effects.
@@ -676,7 +676,6 @@ async function triggerCodexLore() {
 }
 
 // --- ARCHIVIST'S MARK RENDERER ---
-// Shows a permanent golden sigil below the game title.
 function renderMark() {
     if (!state.hollowKingRewards.mark) return;
 
@@ -687,7 +686,6 @@ function renderMark() {
     mark.id = "archivist-mark";
     mark.innerHTML = `✦ <span>Marked by the Archive</span> ✦`;
 
-    // Insert after the title, before the knowledge display.
     const knowledgeDisplay = document.getElementById("knowledge-display");
     if (knowledgeDisplay) {
         document.getElementById("game-container").insertBefore(mark, knowledgeDisplay);
@@ -816,9 +814,12 @@ function loadGame() {
             saved.milestonesReached.forEach(m => milestonesReached.add(m));
         }
 
-        // Restore Hollow Gift multiplier if already claimed.
+        // Restore Hollow Gift multiplier and Mark bonus if already claimed.
         if (state.hollowKingRewards.gift) {
             state.prestige.bonus = saved.prestige.bonus;
+        }
+        if (state.hollowKingRewards.mark) {
+            state.knowledgePerClick = saved.knowledgePerClick || 2;
         }
 
         recalculateKps();
