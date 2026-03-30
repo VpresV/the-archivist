@@ -160,11 +160,13 @@ body {
 }
 
 #lore-title {
-    font-family: 'Cinzel Decorative', cursive;
-    font-size: 1rem;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
     color: #e8c87a;
     margin-bottom: 10px;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
 }
 
 #lore-text {
