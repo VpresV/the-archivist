@@ -9,7 +9,12 @@ const state = {
     upgrades: {
         quillScribe: 0,
         dustReader: 0,
-        shadowScholar: 0
+        shadowScholar: 0,
+        boneCartographer: 0,
+        echoBinder: 0,
+        veilSurgeon: 0,
+        dreamingLibrarian: 0,
+        hollowArchivist: 0
     },
     prestige: {
         count: 0,
@@ -19,27 +24,73 @@ const state = {
 };
 
 // --- UPGRADE DEFINITIONS ---
+// requiredDescent controls when each upgrade becomes available.
+// Upgrades with requiredDescent > 0 are locked until the player
+// has prestiged at least that many times.
 const upgradeDefs = [
     {
         id: "quillScribe",
         name: "Quill Scribe",
         description: "A scribe who copies fragments endlessly.",
         baseCost: 10,
-        kps: 0.1
+        kps: 0.1,
+        requiredDescent: 0
     },
     {
         id: "dustReader",
         name: "Dust Reader",
         description: "Reads meaning from ashes and forgotten dust.",
         baseCost: 75,
-        kps: 0.5
+        kps: 0.5,
+        requiredDescent: 0
     },
     {
         id: "shadowScholar",
         name: "Shadow Scholar",
         description: "A scholar who works in the dark between worlds.",
         baseCost: 500,
-        kps: 3
+        kps: 3,
+        requiredDescent: 0
+    },
+    {
+        id: "boneCartographer",
+        name: "Bone Cartographer",
+        description: "Maps the archive's forbidden wings in brittle script.",
+        baseCost: 3000,
+        kps: 10,
+        requiredDescent: 1
+    },
+    {
+        id: "echoBinder",
+        name: "Echo Binder",
+        description: "Binds whispers into solid text before they fade.",
+        baseCost: 15000,
+        kps: 40,
+        requiredDescent: 2
+    },
+    {
+        id: "veilSurgeon",
+        name: "Veil Surgeon",
+        description: "Cuts through reality to retrieve pages lost between worlds.",
+        baseCost: 100000,
+        kps: 150,
+        requiredDescent: 3
+    },
+    {
+        id: "dreamingLibrarian",
+        name: "Dreaming Librarian",
+        description: "Reads while the archive sleeps, stealing knowledge from its dreams.",
+        baseCost: 750000,
+        kps: 500,
+        requiredDescent: 4
+    },
+    {
+        id: "hollowArchivist",
+        name: "The Hollow Archivist",
+        description: "Has become part of the archive itself. It no longer remembers its name.",
+        baseCost: 5000000,
+        kps: 1500,
+        requiredDescent: 5
     }
 ];
 
@@ -58,6 +109,7 @@ clickBtn.addEventListener("click", () => {
 });
 
 // --- PASSIVE INCOME LOOP ---
+// Runs every second and adds knowledge based on knowledgePerSecond.
 setInterval(() => {
     if (state.knowledgePerSecond > 0) {
         const gained = state.knowledgePerSecond * state.prestige.bonus;
@@ -77,13 +129,21 @@ function updateDisplay() {
 }
 
 // --- UPGRADE COST CALCULATOR ---
+// Cost increases by 15% per level owned — standard clicker scaling formula.
 function getUpgradeCost(def) {
     return Math.floor(def.baseCost * Math.pow(1.15, state.upgrades[def.id]));
+}
+
+// --- UPGRADE AVAILABILITY CHECK ---
+// Returns true if the upgrade is unlocked at the current descent level.
+function isUpgradeUnlocked(def) {
+    return state.prestige.count >= def.requiredDescent;
 }
 
 // --- UPGRADE PURCHASE ---
 function buyUpgrade(defId) {
     const def = upgradeDefs.find(d => d.id === defId);
+    if (!isUpgradeUnlocked(def)) return;
     const cost = getUpgradeCost(def);
     if (state.knowledge >= cost) {
         state.knowledge -= cost;
@@ -97,7 +157,9 @@ function buyUpgrade(defId) {
 function recalculateKps() {
     let total = 0;
     upgradeDefs.forEach(def => {
-        total += def.kps * state.upgrades[def.id];
+        if (isUpgradeUnlocked(def)) {
+            total += def.kps * state.upgrades[def.id];
+        }
     });
     state.knowledgePerSecond = total;
 }
@@ -114,9 +176,14 @@ function renderUpgrades() {
         document.getElementById("game-container").appendChild(container);
     }
 
-    // Build buttons once only.
-    if (!upgradesBuilt) {
+    // Rebuild if a new upgrade has been unlocked since last build.
+    const unlockedCount = upgradeDefs.filter(isUpgradeUnlocked).length;
+    const currentCount = container.querySelectorAll(".upgrade-btn").length;
+
+    if (!upgradesBuilt || unlockedCount !== currentCount) {
+        container.innerHTML = "";
         upgradeDefs.forEach(def => {
+            if (!isUpgradeUnlocked(def)) return;
             const btn = document.createElement("button");
             btn.className = "upgrade-btn";
             btn.id = `upgrade-${def.id}`;
@@ -126,8 +193,9 @@ function renderUpgrades() {
         upgradesBuilt = true;
     }
 
-    // After first build, only update text content and affordability class.
+    // Update text content and affordability class without rebuilding buttons.
     upgradeDefs.forEach(def => {
+        if (!isUpgradeUnlocked(def)) return;
         const cost = getUpgradeCost(def);
         const owned = state.upgrades[def.id];
         const canAfford = state.knowledge >= cost;
@@ -146,7 +214,7 @@ function renderUpgrades() {
 
 // --- MILESTONE CHECKER ---
 const milestonesReached = new Set();
-const milestones = [10, 50, 100, 500, 1000, 5000, 10000];
+const milestones = [10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000];
 
 function checkMilestones() {
     milestones.forEach(m => {
@@ -167,6 +235,7 @@ function showLore(text) {
         document.getElementById("game-container").appendChild(panel);
     }
 
+    // Strip markdown symbols so the text renders cleanly.
     const clean = text
         .replace(/#{1,6}\s*/g, "")
         .replace(/\*\*/g, "")
@@ -176,12 +245,14 @@ function showLore(text) {
 
     document.getElementById("lore-text").textContent = clean;
 
+    // Double requestAnimationFrame ensures fade-in transition works correctly.
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             panel.classList.add("visible");
         });
     });
 
+    // Hide after 12 seconds.
     setTimeout(() => panel.classList.remove("visible"), 12000);
 }
 
@@ -204,8 +275,7 @@ async function triggerLoreEvent(milestone) {
 }
 
 // --- PRESTIGE RENDERER ---
-// Builds the prestige UI once, then only updates text values in place.
-// This prevents any DOM rebuilding that causes hover flicker.
+// Builds the prestige UI once, then only updates values in place.
 let prestigeBuilt = false;
 
 function renderPrestige() {
@@ -220,13 +290,16 @@ function renderPrestige() {
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
 
-    // Build the structure only once.
+    // Check if a new upgrade will unlock on next prestige.
+    const nextUnlock = upgradeDefs.find(d => d.requiredDescent === count + 1);
+
     if (!prestigeBuilt) {
         container.innerHTML = `
             <div id="prestige-info">
                 Descent level: <span id="descent-level">${count}</span> &nbsp;|&nbsp;
                 Knowledge multiplier: <span id="knowledge-multiplier">${bonus.toFixed(1)}x</span>
             </div>
+            <div id="next-unlock-info"></div>
             <div id="action-buttons">
                 <button id="save-btn">✦ Save Progress</button>
                 <a id="kofi-btn" href="https://ko-fi.com/thearchivistgame" target="_blank">
@@ -244,9 +317,18 @@ function renderPrestige() {
         prestigeBuilt = true;
     }
 
-    // After first build, only update the values that change — never touch buttons.
+    // Update values in place.
     document.getElementById("descent-level").textContent = count;
     document.getElementById("knowledge-multiplier").textContent = bonus.toFixed(1) + "x";
+
+    // Show what unlocks on next prestige.
+    const unlockInfo = document.getElementById("next-unlock-info");
+    if (nextUnlock) {
+        unlockInfo.textContent = `Next descent unlocks: ${nextUnlock.name}`;
+        unlockInfo.style.display = "block";
+    } else {
+        unlockInfo.style.display = "none";
+    }
 
     const prestigeBtn = document.getElementById("prestige-btn");
     prestigeBtn.textContent = `Descend Deeper (next bonus: ${nextBonus}%)`;
@@ -257,17 +339,27 @@ function renderPrestige() {
 function doPrestige() {
     state.prestige.count++;
     state.prestige.bonus += 0.5;
-    state.prestige.threshold = Math.floor(state.prestige.threshold * 2);
 
+    // Threshold scales by 2.5x each prestige — harder each time.
+    state.prestige.threshold = Math.floor(state.prestige.threshold * 2.5);
+
+    // Reset run state.
     state.knowledge = 0;
     state.knowledgePerClick = 1;
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
-    state.upgrades.quillScribe = 0;
-    state.upgrades.dustReader = 0;
-    state.upgrades.shadowScholar = 0;
 
+    // Reset all upgrade counts.
+    Object.keys(state.upgrades).forEach(key => {
+        state.upgrades[key] = 0;
+    });
+
+    // Reset milestones so lore fires again on the new run.
     milestonesReached.clear();
+
+    // Force upgrade buttons to rebuild since new ones may have unlocked.
+    upgradesBuilt = false;
+
     triggerPrestigeLore(state.prestige.count);
     saveGame();
     updateDisplay();
@@ -335,6 +427,8 @@ function showSaveIndicator() {
     if (!indicator) return;
     indicator.textContent = "✦ Progress saved ✦";
     indicator.classList.add("visible");
+    indicator.style.color = "";
+    indicator.onclick = null;
     setTimeout(() => indicator.classList.remove("visible"), 2000);
 }
 
@@ -349,14 +443,12 @@ function confirmReset() {
     indicator.classList.add("visible");
     indicator.style.color = "#e87a7a";
 
-    // If clicked again within 5 seconds, execute the reset.
     indicator.onclick = () => {
         localStorage.removeItem("archivist_save");
         localStorage.removeItem("htp_dismissed");
         location.reload();
     };
 
-    // Cancel after 5 seconds if not confirmed.
     setTimeout(() => {
         indicator.classList.remove("visible");
         indicator.style.color = "";
