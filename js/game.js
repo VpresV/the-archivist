@@ -4,14 +4,19 @@
 // This object holds the entire game state at any moment.
 // All numbers the player sees come from here.
 const state = {
-    knowledge: 0,           // current knowledge points
-    knowledgePerClick: 1,   // how much each click gives
-    knowledgePerSecond: 0,  // passive generation rate
-    totalEarned: 0,         // lifetime total (used for milestones)
+    knowledge: 0,
+    knowledgePerClick: 1,
+    knowledgePerSecond: 0,
+    totalEarned: 0,
     upgrades: {
-        quillScribe: 0,     // first passive upgrade
-        dustReader: 0,      // second passive upgrade
-        shadowScholar: 0    // third passive upgrade
+        quillScribe: 0,
+        dustReader: 0,
+        shadowScholar: 0
+    },
+    prestige: {
+        count: 0,           // how many times the player has prestiged
+        bonus: 1.0,         // multiplier applied to all knowledge gain
+        threshold: 10000    // knowledge needed to prestige
     }
 };
 
@@ -52,8 +57,9 @@ const clickBtn = document.getElementById("click-btn");
 // --- CLICK HANDLER ---
 // Called every time the player clicks the main button.
 clickBtn.addEventListener("click", () => {
-    state.knowledge += state.knowledgePerClick;
-    state.totalEarned += state.knowledgePerClick;
+    const gained = state.knowledgePerClick * state.prestige.bonus;
+    state.knowledge += gained;
+    state.totalEarned += gained;
     updateDisplay();
     checkMilestones();
 });
@@ -63,19 +69,21 @@ clickBtn.addEventListener("click", () => {
 // setInterval calls a function repeatedly at a fixed interval (in ms).
 setInterval(() => {
     if (state.knowledgePerSecond > 0) {
-        state.knowledge += state.knowledgePerSecond;
-        state.totalEarned += state.knowledgePerSecond;
+        const gained = state.knowledgePerSecond * state.prestige.bonus;
+        state.knowledge += gained;
+        state.totalEarned += gained;
         updateDisplay();
         checkMilestones();
     }
-}, 1000);
+}, 1000);;
 
 // --- DISPLAY UPDATE ---
 // Updates all visible numbers on the page to match the current state.
 function updateDisplay() {
     knowledgeCountEl.textContent = Math.floor(state.knowledge);
-    fpsEl.textContent = state.knowledgePerSecond.toFixed(1);
+    fpsEl.textContent = (state.knowledgePerSecond * state.prestige.bonus).toFixed(1);
     renderUpgrades();
+    renderPrestige();
 }
 
 // --- UPGRADE COST CALCULATOR ---
@@ -214,7 +222,81 @@ async function triggerLoreEvent(milestone) {
         console.log("Lore generation failed:", err);
     }
 }
+// --- PRESTIGE RENDERER ---
+// Shows the prestige button when the player has enough knowledge.
+// Displays current prestige count and next bonus.
+function renderPrestige() {
+    let container = document.getElementById("prestige-container");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "prestige-container";
+        document.getElementById("game-container").appendChild(container);
+    }
 
+    const { count, bonus, threshold } = state.prestige;
+    const canPrestige = state.knowledge >= threshold;
+    const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
+
+    container.innerHTML = `
+        <div id="prestige-info">
+            Descent level: <span>${count}</span> &nbsp;|&nbsp;
+            Knowledge multiplier: <span>${bonus.toFixed(1)}x</span>
+        </div>
+        ${canPrestige ? `<button id="prestige-btn">Descend Deeper (next bonus: ${nextBonus}%)</button>` : ""}
+    `;
+
+    if (canPrestige) {
+        document.getElementById("prestige-btn").onclick = doPrestige;
+    }
+}
+
+// --- PRESTIGE ACTION ---
+// Resets the run but preserves and increases the bonus multiplier.
+// Triggers a special AI lore event themed around the new descent level.
+function doPrestige() {
+    state.prestige.count++;
+    state.prestige.bonus += 0.5;
+    state.prestige.threshold = Math.floor(state.prestige.threshold * 2);
+
+    // Reset run state
+    state.knowledge = 0;
+    state.knowledgePerClick = 1;
+    state.knowledgePerSecond = 0;
+    state.totalEarned = 0;
+    state.upgrades.quillScribe = 0;
+    state.upgrades.dustReader = 0;
+    state.upgrades.shadowScholar = 0;
+
+    // Reset milestones so lore fires again on the new run
+    milestonesReached.clear();
+
+    // Trigger a special prestige lore event
+    triggerPrestigeLore(state.prestige.count);
+
+    updateDisplay();
+}
+
+// --- PRESTIGE LORE ---
+// Calls the Worker with prestige context for a darker, deeper lore fragment.
+async function triggerPrestigeLore(descentLevel) {
+    try {
+        const response = await fetch("https://archivist-proxy.ap24004.workers.dev/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                milestone: `prestige_${descentLevel}`,
+                upgrades: state.upgrades,
+                context: `The player has just descended to archive level ${descentLevel}. This is a prestige event. Write a darker, more unsettling fragment than before. The archive is pulling them deeper.`
+            })
+        });
+
+        const data = await response.json();
+        showLore(data.lore);
+
+    } catch (err) {
+        console.log("Prestige lore generation failed:", err);
+    }
+}
 // --- INIT ---
 // Starts the game by rendering the initial state.
 updateDisplay();
