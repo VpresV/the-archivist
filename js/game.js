@@ -190,9 +190,9 @@ async function triggerLoreEvent(milestone) {
 }
 
 // --- PRESTIGE RENDERER ---
-// Only rebuilds the DOM when prestige state actually changes,
-// preventing hover flicker caused by constant re-rendering.
-let lastPrestigeSnapshot = "";
+// Builds the prestige UI once, then only updates text values in place.
+// This prevents any DOM rebuilding that causes hover flicker.
+let prestigeBuilt = false;
 
 function renderPrestige() {
     let container = document.getElementById("prestige-container");
@@ -206,32 +206,37 @@ function renderPrestige() {
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
 
-    const snapshot = `${count}-${bonus}-${canPrestige}`;
-    if (snapshot === lastPrestigeSnapshot) return;
-    lastPrestigeSnapshot = snapshot;
+    // Build the structure only once.
+    if (!prestigeBuilt) {
+        container.innerHTML = `
+            <div id="prestige-info">
+                Descent level: <span id="descent-level">${count}</span> &nbsp;|&nbsp;
+                Knowledge multiplier: <span id="knowledge-multiplier">${bonus.toFixed(1)}x</span>
+            </div>
+            <div id="action-buttons">
+                <button id="save-btn">✦ Save Progress</button>
+                <a id="kofi-btn" href="https://ko-fi.com/thearchivistgame" target="_blank">
+                    Support the Archive
+                </a>
+            </div>
+            <div id="save-indicator"></div>
+            <button id="prestige-btn" style="display:none;">Descend Deeper</button>
+            <button id="reset-btn">Reset all progress</button>
+        `;
 
-    container.innerHTML = `
-        <div id="prestige-info">
-            Descent level: <span>${count}</span> &nbsp;|&nbsp;
-            Knowledge multiplier: <span>${bonus.toFixed(1)}x</span>
-        </div>
-        <div id="action-buttons">
-            <button id="save-btn">✦ Save Progress</button>
-            <a id="kofi-btn" href="https://ko-fi.com/thearchivistgame" target="_blank">
-                Support the Archive
-            </a>
-        </div>
-        <div id="save-indicator"></div>
-        ${canPrestige ? `<button id="prestige-btn">Descend Deeper (next bonus: ${nextBonus}%)</button>` : ""}
-        <button id="reset-btn">Reset all progress</button>
-    `;
-
-    document.getElementById("save-btn").onclick = saveGame;
-    document.getElementById("reset-btn").onclick = confirmReset;
-
-    if (canPrestige) {
+        document.getElementById("save-btn").onclick = saveGame;
+        document.getElementById("reset-btn").onclick = confirmReset;
         document.getElementById("prestige-btn").onclick = doPrestige;
+        prestigeBuilt = true;
     }
+
+    // After first build, only update the values that change — never touch buttons.
+    document.getElementById("descent-level").textContent = count;
+    document.getElementById("knowledge-multiplier").textContent = bonus.toFixed(1) + "x";
+
+    const prestigeBtn = document.getElementById("prestige-btn");
+    prestigeBtn.textContent = `Descend Deeper (next bonus: ${nextBonus}%)`;
+    prestigeBtn.style.display = canPrestige ? "inline-block" : "none";
 }
 
 // --- PRESTIGE ACTION ---
