@@ -10,8 +10,7 @@
 
 body {
     background-color: #0a0a0a;
-    background-image: 
-        radial-gradient(ellipse at top, #1a0a0a 0%, #0a0a0a 70%);
+    background-image: radial-gradient(ellipse at top, #1a0a0a 0%, #0a0a0a 70%);
     color: #c9a96e;
     font-family: 'Crimson Text', Georgia, serif;
     min-height: 100vh;
@@ -31,13 +30,14 @@ body {
 
 #game-title {
     font-family: 'Cinzel Decorative', cursive;
-    font-size: 4rem;
+    font-size: 3.5rem;
     color: #e8c87a;
-    text-shadow: 
+    text-shadow:
         0 0 20px rgba(200, 150, 50, 0.5),
         0 0 60px rgba(200, 100, 20, 0.2);
     letter-spacing: 4px;
     margin-bottom: 10px;
+    text-align: center;
 }
 
 #knowledge-display {
@@ -62,15 +62,14 @@ body {
     cursor: pointer;
     letter-spacing: 2px;
     transition: all 0.2s ease;
-    box-shadow: 
+    box-shadow:
         0 0 15px rgba(200, 150, 50, 0.1),
         inset 0 0 10px rgba(0,0,0,0.5);
-    position: relative;
 }
 
 #click-btn:hover {
     background: linear-gradient(145deg, #2d1a00, #4a2e00);
-    box-shadow: 
+    box-shadow:
         0 0 25px rgba(200, 150, 50, 0.3),
         inset 0 0 10px rgba(0,0,0,0.3);
     color: #fff5d6;
@@ -142,7 +141,7 @@ body {
     font-size: 0.85rem;
 }
 
-/* Lore panel - will be populated by AI in Phase 4 */
+/* Lore panel */
 #lore-panel {
     width: 100%;
     max-width: 600px;
@@ -162,8 +161,19 @@ body {
 
 #lore-title {
     font-family: 'Cinzel Decorative', cursive;
-    font-size: 1.3rem;
-    color:
+    font-size: 1rem;
+    color: #e8c87a;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+#lore-text {
+    font-size: 1rem;
+    color: #a08050;
+    font-style: italic;
+    line-height: 1.8;
+}
+
 /* Prestige UI */
 #prestige-container {
     width: 100%;
@@ -189,6 +199,66 @@ body {
     font-weight: 600;
 }
 
+/* Action buttons row */
+#action-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#save-btn {
+    background: transparent;
+    color: #6b5030;
+    border: 1px solid #3a2a10;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    padding: 8px 20px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+#save-btn:hover {
+    color: #c9a96e;
+    border-color: #5a3e1b;
+}
+
+#kofi-btn {
+    background: transparent;
+    color: #6b5030;
+    border: 1px solid #3a2a10;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    padding: 8px 20px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+#kofi-btn:hover {
+    color: #c9a96e;
+    border-color: #5a3e1b;
+}
+
+#save-indicator {
+    font-size: 0.85rem;
+    color: #6b5030;
+    letter-spacing: 2px;
+    font-style: italic;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    margin-top: 4px;
+    min-height: 1.2em;
+}
+
+#save-indicator.visible {
+    opacity: 1;
+}
+
 #prestige-btn {
     background: linear-gradient(145deg, #1a0000, #2d0a00);
     color: #e87a7a;
@@ -211,37 +281,4 @@ body {
 
 #prestige-btn:active {
     transform: translateY(1px);
-}
-
-/* Save system UI */
-#save-btn {
-    background: transparent;
-    color: #6b5030;
-    border: 1px solid #3a2a10;
-    font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    padding: 8px 20px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: all 0.2s ease;
-    margin-bottom: 8px;
-}
-
-#save-btn:hover {
-    color: #c9a96e;
-    border-color: #5a3e1b;
-}
-
-#save-indicator {
-    font-size: 0.85rem;
-    color: #6b5030;
-    letter-spacing: 2px;
-    font-style: italic;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    margin-top: 4px;
-}
-
-#save-indicator.visible {
-    opacity: 1;
 }
