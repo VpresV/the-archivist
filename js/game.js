@@ -161,7 +161,6 @@ function recalculateKps() {
 }
 
 // --- UPGRADE RENDERER ---
-// Builds upgrade buttons once, then only updates text and classes in place.
 let upgradesBuilt = false;
 
 function renderUpgrades() {
@@ -297,9 +296,7 @@ function renderPrestige() {
             <div id="next-unlock-info"></div>
             <div id="action-buttons">
                 <button id="save-btn">✦ Save Progress</button>
-                <a id="kofi-btn" href="https://ko-fi.com/thearchivistgame" target="_blank">
-                    Support the Archive
-                </a>
+                <button id="kofi-btn">Support the Archive</button>
             </div>
             <div id="save-indicator"></div>
             <button id="prestige-btn" style="display:none;">Descend Deeper</button>
@@ -309,6 +306,7 @@ function renderPrestige() {
         document.getElementById("save-btn").onclick = saveGame;
         document.getElementById("reset-btn").onclick = confirmReset;
         document.getElementById("prestige-btn").onclick = doPrestige;
+        document.getElementById("kofi-btn").onclick = showSupportOverlay;
         prestigeBuilt = true;
     }
 
@@ -368,6 +366,50 @@ async function triggerPrestigeLore(descentLevel) {
     } catch (err) {
         console.log("Prestige lore generation failed:", err);
     }
+}
+
+// --- SUPPORT OVERLAY ---
+// Shows an atmospheric message before sending the player to Ko-fi.
+function showSupportOverlay() {
+    let overlay = document.getElementById("support-overlay");
+    if (overlay) {
+        overlay.classList.add("visible");
+        return;
+    }
+
+    overlay = document.createElement("div");
+    overlay.id = "support-overlay";
+    overlay.innerHTML = `
+        <div id="support-overlay-box">
+            <div id="support-overlay-title">The Archive Endures</div>
+            <div id="support-overlay-text">
+                Every fragment you have recovered, every scholar summoned, every descent into the dark —
+                thank you for being here.<br><br>
+                This game was made freely and will stay that way. No paywalls, no locked content, no pressure.
+                If the archive has given you something — a moment of wonder, a chill, a reason to return —
+                a small offering is always welcome, but never expected.<br><br>
+                <em>The Archivist remembers those who gave. And those who simply stayed.</em>
+            </div>
+            <div id="support-overlay-buttons">
+                <a id="support-proceed-btn" href="https://ko-fi.com/thearchivistgame" target="_blank">
+                    Leave an Offering
+                </a>
+                <button id="support-dismiss-btn">Return to the Archive</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            overlay.classList.add("visible");
+        });
+    });
+
+    document.getElementById("support-dismiss-btn").onclick = () => {
+        overlay.classList.remove("visible");
+    };
 }
 
 // --- SAVE SYSTEM ---
