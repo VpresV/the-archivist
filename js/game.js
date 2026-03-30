@@ -206,8 +206,6 @@ function renderPrestige() {
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
 
-    // Build a snapshot string of the values that affect the UI.
-    // If nothing has changed since last render, skip rebuilding the DOM.
     const snapshot = `${count}-${bonus}-${canPrestige}`;
     if (snapshot === lastPrestigeSnapshot) return;
     lastPrestigeSnapshot = snapshot;
@@ -225,9 +223,11 @@ function renderPrestige() {
         </div>
         <div id="save-indicator"></div>
         ${canPrestige ? `<button id="prestige-btn">Descend Deeper (next bonus: ${nextBonus}%)</button>` : ""}
+        <button id="reset-btn">Reset all progress</button>
     `;
 
     document.getElementById("save-btn").onclick = saveGame;
+    document.getElementById("reset-btn").onclick = confirmReset;
 
     if (canPrestige) {
         document.getElementById("prestige-btn").onclick = doPrestige;
@@ -319,12 +319,36 @@ function showSaveIndicator() {
     setTimeout(() => indicator.classList.remove("visible"), 2000);
 }
 
+// --- RESET SAVE ---
+// Shows an inline confirmation rather than a browser alert,
+// keeping the atmosphere intact and avoiding jarring popups.
+function confirmReset() {
+    const indicator = document.getElementById("save-indicator");
+    if (!indicator) return;
+
+    indicator.textContent = "Are you sure? Click again to erase everything.";
+    indicator.classList.add("visible");
+    indicator.style.color = "#e87a7a";
+
+    // If clicked again within 5 seconds, execute the reset.
+    indicator.onclick = () => {
+        localStorage.removeItem("archivist_save");
+        localStorage.removeItem("htp_dismissed");
+        location.reload();
+    };
+
+    // Cancel after 5 seconds if not confirmed.
+    setTimeout(() => {
+        indicator.classList.remove("visible");
+        indicator.style.color = "";
+        indicator.onclick = null;
+    }, 5000);
+}
+
 // --- AUTOSAVE ---
 setInterval(saveGame, 30000);
 
 // --- HOW TO PLAY TOGGLE ---
-// Collapses and expands the how to play section.
-// Hidden by default after first visit using localStorage.
 const htpContent = document.getElementById("htp-content");
 const htpToggle = document.getElementById("htp-toggle");
 
