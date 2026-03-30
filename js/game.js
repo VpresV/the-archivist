@@ -736,7 +736,7 @@ function renderNgPlusIndicator() {
 
     indicator = document.createElement("div");
     indicator.id = "ngplus-indicator";
-    indicator.textContent = "⟳ Second Archive";
+    indicator.textContent = "✦ It Did Not Stay Closed ✦";
 
     const title = document.getElementById("game-title");
     if (title && title.nextSibling) {
