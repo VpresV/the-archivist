@@ -24,9 +24,6 @@ const state = {
 };
 
 // --- UPGRADE DEFINITIONS ---
-// requiredDescent controls when each upgrade becomes available.
-// Upgrades with requiredDescent > 0 are locked until the player
-// has prestiged at least that many times.
 const upgradeDefs = [
     {
         id: "quillScribe",
@@ -109,7 +106,6 @@ clickBtn.addEventListener("click", () => {
 });
 
 // --- PASSIVE INCOME LOOP ---
-// Runs every second and adds knowledge based on knowledgePerSecond.
 setInterval(() => {
     if (state.knowledgePerSecond > 0) {
         const gained = state.knowledgePerSecond * state.prestige.bonus;
@@ -136,7 +132,6 @@ function getUpgradeCost(def) {
 }
 
 // --- UPGRADE AVAILABILITY CHECK ---
-// Returns true if the upgrade is unlocked at the current descent level.
 function isUpgradeUnlocked(def) {
     return state.prestige.count >= def.requiredDescent;
 }
@@ -159,7 +154,7 @@ function recalculateKps() {
     let total = 0;
     upgradeDefs.forEach(def => {
         if (isUpgradeUnlocked(def)) {
-            total += def.kps * state.upgrades[def.id];
+            total += def.kps * (state.upgrades[def.id] || 0);
         }
     });
     state.knowledgePerSecond = total;
@@ -177,7 +172,6 @@ function renderUpgrades() {
         document.getElementById("game-container").appendChild(container);
     }
 
-    // Rebuild if a new upgrade has been unlocked since last build.
     const unlockedCount = upgradeDefs.filter(isUpgradeUnlocked).length;
     const currentCount = container.querySelectorAll(".upgrade-btn").length;
 
@@ -194,11 +188,10 @@ function renderUpgrades() {
         upgradesBuilt = true;
     }
 
-    // Update text content and affordability class without rebuilding buttons.
     upgradeDefs.forEach(def => {
         if (!isUpgradeUnlocked(def)) return;
         const cost = getUpgradeCost(def);
-        const owned = state.upgrades[def.id];
+        const owned = state.upgrades[def.id] || 0;
         const canAfford = state.knowledge >= cost;
 
         const btn = document.getElementById(`upgrade-${def.id}`);
@@ -227,33 +220,37 @@ function checkMilestones() {
 }
 
 // --- LORE PANEL DISPLAY ---
-function showLore(text) {
+function showLore(title, text) {
     let panel = document.getElementById("lore-panel");
     if (!panel) {
         panel = document.createElement("div");
         panel.id = "lore-panel";
-        panel.innerHTML = `<div id="lore-title">Fragment Recovered</div><div id="lore-text"></div>`;
+        panel.innerHTML = `<div id="lore-title"></div><div id="lore-text"></div>`;
         document.getElementById("game-container").appendChild(panel);
     }
 
-    // Strip markdown symbols so the text renders cleanly.
-    const clean = text
+    const cleanText = text
         .replace(/#{1,6}\s*/g, "")
         .replace(/\*\*/g, "")
         .replace(/\*/g, "")
         .replace(/\n+/g, " ")
         .trim();
 
-    document.getElementById("lore-text").textContent = clean;
+    const cleanTitle = title
+        .replace(/#{1,6}\s*/g, "")
+        .replace(/\*\*/g, "")
+        .replace(/\*/g, "")
+        .trim();
 
-    // Double requestAnimationFrame ensures fade-in transition works correctly.
+    document.getElementById("lore-title").textContent = cleanTitle;
+    document.getElementById("lore-text").textContent = cleanText;
+
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             panel.classList.add("visible");
         });
     });
 
-    // Hide after 12 seconds.
     setTimeout(() => panel.classList.remove("visible"), 12000);
 }
 
@@ -269,14 +266,13 @@ async function triggerLoreEvent(milestone) {
             })
         });
         const data = await response.json();
-        showLore(data.lore);
+        showLore(data.title || "Whisper from the Dark", data.lore);
     } catch (err) {
         console.log("Lore generation failed:", err);
     }
 }
 
 // --- PRESTIGE RENDERER ---
-// Builds the prestige UI once, then only updates values in place.
 let prestigeBuilt = false;
 
 function renderPrestige() {
@@ -290,8 +286,6 @@ function renderPrestige() {
     const { count, bonus, threshold } = state.prestige;
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
-
-    // Check if a new upgrade will unlock on next prestige.
     const nextUnlock = upgradeDefs.find(d => d.requiredDescent === count + 1);
 
     if (!prestigeBuilt) {
@@ -318,11 +312,9 @@ function renderPrestige() {
         prestigeBuilt = true;
     }
 
-    // Update values in place.
     document.getElementById("descent-level").textContent = count;
     document.getElementById("knowledge-multiplier").textContent = bonus.toFixed(1) + "x";
 
-    // Show what unlocks on next prestige.
     const unlockInfo = document.getElementById("next-unlock-info");
     if (nextUnlock) {
         unlockInfo.textContent = `Next descent unlocks: ${nextUnlock.name}`;
@@ -340,25 +332,18 @@ function renderPrestige() {
 function doPrestige() {
     state.prestige.count++;
     state.prestige.bonus += 0.5;
-
-    // Threshold scales by 2.5x each prestige — harder each time.
     state.prestige.threshold = Math.floor(state.prestige.threshold * 2.5);
 
-    // Reset run state.
     state.knowledge = 0;
     state.knowledgePerClick = 1;
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
 
-    // Reset all upgrade counts.
     Object.keys(state.upgrades).forEach(key => {
         state.upgrades[key] = 0;
     });
 
-    // Reset milestones so lore fires again on the new run.
     milestonesReached.clear();
-
-    // Force upgrade buttons to rebuild since new ones may have unlocked.
     upgradesBuilt = false;
 
     triggerPrestigeLore(state.prestige.count);
@@ -379,7 +364,7 @@ async function triggerPrestigeLore(descentLevel) {
             })
         });
         const data = await response.json();
-        showLore(data.lore);
+        showLore(data.title || "Whisper from the Dark", data.lore);
     } catch (err) {
         console.log("Prestige lore generation failed:", err);
     }
@@ -412,8 +397,6 @@ function loadGame() {
         state.totalEarned = saved.totalEarned || 0;
         state.prestige = saved.prestige || state.prestige;
 
-        // Migrate upgrades safely — merge saved values into the current
-        // upgrade structure so new upgrades default to 0 if missing from save.
         if (saved.upgrades) {
             Object.keys(state.upgrades).forEach(key => {
                 state.upgrades[key] = saved.upgrades[key] || 0;
@@ -443,8 +426,6 @@ function showSaveIndicator() {
 }
 
 // --- RESET SAVE ---
-// Shows an inline confirmation rather than a browser alert,
-// keeping the atmosphere intact and avoiding jarring popups.
 function confirmReset() {
     const indicator = document.getElementById("save-indicator");
     if (!indicator) return;
