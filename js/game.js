@@ -160,9 +160,53 @@ function checkMilestones() {
 // --- LORE EVENT TRIGGER ---
 // Placeholder for now. Later this will call the Cloudflare Worker
 // to get an AI-generated lore fragment from the Anthropic API.
-function triggerLoreEvent(milestone) {
-    console.log(`Milestone reached: ${milestone} knowledge`);
-    // Phase 4: AI lore generation will be added here
+// --- LORE PANEL DISPLAY ---
+// Shows the lore panel and populates it with AI-generated text.
+function showLore(text) {
+    let panel = document.getElementById("lore-panel");
+    if (!panel) {
+        panel = document.createElement("div");
+        panel.id = "lore-panel";
+        panel.innerHTML = `<div id="lore-title">Fragment Recovered</div><div id="lore-text"></div>`;
+        document.getElementById("game-container").appendChild(panel);
+    }
+
+    // Strip markdown symbols so the text renders cleanly.
+    const clean = text
+        .replace(/#{1,6}\s*/g, "")
+        .replace(/\*\*/g, "")
+        .replace(/\*/g, "")
+        .replace(/\n+/g, " ")
+        .trim();
+
+    document.getElementById("lore-text").textContent = clean;
+    panel.classList.add("visible");
+
+    // Hide the panel after 12 seconds so it doesn't clutter the screen.
+    setTimeout(() => panel.classList.remove("visible"), 12000);
+}
+
+// --- LORE EVENT TRIGGER ---
+// Calls the Cloudflare Worker which calls Anthropic and returns a lore fragment.
+// Using async/await to handle the asynchronous API call cleanly.
+async function triggerLoreEvent(milestone) {
+    try {
+        const response = await fetch("https://archivist-proxy.ap24004.workers.dev/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                milestone: milestone,
+                upgrades: state.upgrades
+            })
+        });
+
+        const data = await response.json();
+        showLore(data.lore);
+
+    } catch (err) {
+        // Fail silently - if the API call fails, the game continues normally.
+        console.log("Lore generation failed:", err);
+    }
 }
 
 // --- INIT ---
