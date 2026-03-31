@@ -48,65 +48,65 @@ const state = {
 // --- ACHIEVEMENT DEFINITIONS ---
 const achievementDefs = [
     // First Steps
-    { id: "first_light", name: "First Light", condition: () => state.stats.totalFragmentsEver >= 1, flavour: "Something stirs in the dark." },
-    { id: "ink_takes_hold", name: "The Ink Takes Hold", condition: () => Object.values(state.upgrades).some(v => v > 0), flavour: "The archive accepts your offering." },
-    { id: "deeper_still", name: "Deeper Still", condition: () => state.stats.totalDescents >= 1, flavour: "You let go. The archive pulls you down." },
-    { id: "quill_moves", name: "The Quill Moves", condition: () => state.totalClicks >= 100, flavour: "The hand learns before the mind does." },
-    { id: "something_listens", name: "Something Listens", condition: () => state.loreLog.length >= 1, flavour: "The archive has noticed you." },
+    { id: "first_light", name: "First Light", hint: "Recover your first fragment.", condition: () => state.stats.totalFragmentsEver >= 1, flavour: "Something stirs in the dark." },
+    { id: "ink_takes_hold", name: "The Ink Takes Hold", hint: "Buy your first upgrade.", condition: () => Object.values(state.upgrades).some(v => v > 0), flavour: "The archive accepts your offering." },
+    { id: "deeper_still", name: "Deeper Still", hint: "Descend for the first time.", condition: () => state.stats.totalDescents >= 1, flavour: "You let go. The archive pulls you down." },
+    { id: "quill_moves", name: "The Quill Moves", hint: "Click 100 times.", condition: () => state.totalClicks >= 100, flavour: "The hand learns before the mind does." },
+    { id: "something_listens", name: "Something Listens", hint: "Receive your first lore fragment.", condition: () => state.loreLog.length >= 1, flavour: "The archive has noticed you." },
     // Knowledge
-    { id: "thousand_voices", name: "A Thousand Voices", condition: () => state.stats.totalFragmentsEver >= 1000, flavour: "The whispers become a chorus." },
-    { id: "ten_thousand", name: "Ten Thousand Echoes", condition: () => state.stats.totalFragmentsEver >= 10000, flavour: "The chorus becomes a roar." },
-    { id: "hundred_thousand", name: "One Hundred Thousand", condition: () => state.stats.totalFragmentsEver >= 100000, flavour: "The archive breathes with you now." },
-    { id: "one_million", name: "One Million", condition: () => state.stats.totalFragmentsEver >= 1000000, flavour: "The archive is nearly full." },
-    { id: "ten_million", name: "Ten Million", condition: () => state.stats.totalFragmentsEver >= 10000000, flavour: "There is no difference between you and it." },
-    { id: "hundred_million", name: "One Hundred Million", condition: () => state.stats.totalFragmentsEver >= 100000000, flavour: "The archive does not end. Neither do you." },
-    { id: "one_billion", name: "One Billion", condition: () => state.stats.totalFragmentsEver >= 1000000000, flavour: "Something older than the archive has taken notice." },
+    { id: "thousand_voices", name: "A Thousand Voices", hint: "Recover 1,000 fragments (lifetime).", condition: () => state.stats.totalFragmentsEver >= 1000, flavour: "The whispers become a chorus." },
+    { id: "ten_thousand", name: "Ten Thousand Echoes", hint: "Recover 10,000 fragments (lifetime).", condition: () => state.stats.totalFragmentsEver >= 10000, flavour: "The chorus becomes a roar." },
+    { id: "hundred_thousand", name: "One Hundred Thousand", hint: "Recover 100,000 fragments (lifetime).", condition: () => state.stats.totalFragmentsEver >= 100000, flavour: "The archive breathes with you now." },
+    { id: "one_million", name: "One Million", hint: "Recover 1,000,000 fragments (lifetime).", condition: () => state.stats.totalFragmentsEver >= 1000000, flavour: "The archive is nearly full." },
+    { id: "ten_million", name: "Ten Million", hint: "Recover 10,000,000 fragments (lifetime).", condition: () => state.stats.totalFragmentsEver >= 10000000, flavour: "There is no difference between you and it." },
+    { id: "hundred_million", name: "One Hundred Million", hint: "Recover 100,000,000 fragments (lifetime).", condition: () => state.stats.totalFragmentsEver >= 100000000, flavour: "The archive does not end. Neither do you." },
+    { id: "one_billion", name: "One Billion", hint: "Recover 1,000,000,000 fragments (lifetime).", condition: () => state.stats.totalFragmentsEver >= 1000000000, flavour: "Something older than the archive has taken notice." },
     // Scholars
-    { id: "ten_scribes", name: "The Quill Never Rests", condition: () => state.upgrades.quillScribe >= 10, flavour: "They write without hands now." },
-    { id: "ten_dust", name: "Dust and Memory", condition: () => state.upgrades.dustReader >= 10, flavour: "They read what was never written." },
-    { id: "ten_scholars", name: "Between Worlds", condition: () => state.upgrades.shadowScholar >= 10, flavour: "They stopped casting shadows weeks ago." },
-    { id: "first_bone", name: "Brittle Script", condition: () => state.upgrades.boneCartographer >= 1, flavour: "The maps lead somewhere they should not." },
-    { id: "first_echo", name: "Bound Whispers", condition: () => state.upgrades.echoBinder >= 1, flavour: "The silence has texture now." },
-    { id: "first_veil", name: "The Veil Thins", condition: () => state.upgrades.veilSurgeon >= 1, flavour: "Something on the other side is curious." },
-    { id: "first_librarian", name: "The Library Sleeps", condition: () => state.upgrades.dreamingLibrarian >= 1, flavour: "Do not wake it." },
-    { id: "first_hollow", name: "The Hollow Ones", condition: () => state.upgrades.hollowArchivist >= 1, flavour: "It no longer answers to its name." },
+    { id: "ten_scribes", name: "The Quill Never Rests", hint: "Own 10 Quill Scribes.", condition: () => state.upgrades.quillScribe >= 10, flavour: "They write without hands now." },
+    { id: "ten_dust", name: "Dust and Memory", hint: "Own 10 Dust Readers.", condition: () => state.upgrades.dustReader >= 10, flavour: "They read what was never written." },
+    { id: "ten_scholars", name: "Between Worlds", hint: "Own 10 Shadow Scholars.", condition: () => state.upgrades.shadowScholar >= 10, flavour: "They stopped casting shadows weeks ago." },
+    { id: "first_bone", name: "Brittle Script", hint: "Purchase a Bone Cartographer.", condition: () => state.upgrades.boneCartographer >= 1, flavour: "The maps lead somewhere they should not." },
+    { id: "first_echo", name: "Bound Whispers", hint: "Purchase an Echo Binder.", condition: () => state.upgrades.echoBinder >= 1, flavour: "The silence has texture now." },
+    { id: "first_veil", name: "The Veil Thins", hint: "Purchase a Veil Surgeon.", condition: () => state.upgrades.veilSurgeon >= 1, flavour: "Something on the other side is curious." },
+    { id: "first_librarian", name: "The Library Sleeps", hint: "Purchase a Dreaming Librarian.", condition: () => state.upgrades.dreamingLibrarian >= 1, flavour: "Do not wake it." },
+    { id: "first_hollow", name: "The Hollow Ones", hint: "Purchase a Hollow Archivist.", condition: () => state.upgrades.hollowArchivist >= 1, flavour: "It no longer answers to its name." },
     // Descent
-    { id: "descent_3", name: "Into the Abyss", condition: () => state.stats.totalDescents >= 3, flavour: "The light above is very small now." },
-    { id: "descent_5", name: "No Way Back", condition: () => state.stats.totalDescents >= 5, flavour: "You stopped looking up after the third descent." },
-    { id: "descent_8", name: "What Remains", condition: () => state.stats.totalDescents >= 8, flavour: "There is very little of you left that is not the archive." },
-    { id: "descent_10", name: "The Deep Places", condition: () => state.stats.totalDescents >= 10, flavour: "Things live here that have never seen light." },
-    { id: "descent_12", name: "Beyond Counting", condition: () => state.stats.totalDescents >= 12, flavour: "The archive no longer bothers to number the pages." },
-    { id: "descent_14", name: "The Final Descent", condition: () => state.stats.totalDescents >= 14, flavour: "One more. Just one more." },
-    { id: "true_ending", name: "The Archivist", condition: () => state.endingSeen, flavour: "You were always going to end up here." },
-    { id: "ng_plus", name: "It Did Not Stay Closed", condition: () => state.ngPlus, flavour: "It did not stay closed." },
+    { id: "descent_3", name: "Into the Abyss", hint: "Complete 3 descents.", condition: () => state.stats.totalDescents >= 3, flavour: "The light above is very small now." },
+    { id: "descent_5", name: "No Way Back", hint: "Complete 5 descents.", condition: () => state.stats.totalDescents >= 5, flavour: "You stopped looking up after the third descent." },
+    { id: "descent_8", name: "What Remains", hint: "Complete 8 descents.", condition: () => state.stats.totalDescents >= 8, flavour: "There is very little of you left that is not the archive." },
+    { id: "descent_10", name: "The Deep Places", hint: "Complete 10 descents.", condition: () => state.stats.totalDescents >= 10, flavour: "Things live here that have never seen light." },
+    { id: "descent_12", name: "Beyond Counting", hint: "Complete 12 descents.", condition: () => state.stats.totalDescents >= 12, flavour: "The archive no longer bothers to number the pages." },
+    { id: "descent_14", name: "The Final Descent", hint: "Complete 14 descents.", condition: () => state.stats.totalDescents >= 14, flavour: "One more. Just one more." },
+    { id: "true_ending", name: "The Archivist", hint: "Complete the true ending.", condition: () => state.endingSeen, flavour: "You were always going to end up here." },
+    { id: "ng_plus", name: "It Did Not Stay Closed", hint: "Begin a New Game+ run.", condition: () => state.ngPlus, flavour: "It did not stay closed." },
     // Hollow King
-    { id: "ritual_available", name: "Something Stirs", condition: () => state.ritualAvailable || state.ritualAttempted, flavour: "He has been watching longer than you know." },
-    { id: "ritual_performed", name: "The Sacrifice", condition: () => state.ritualAttempted, flavour: "What you gave, you will not get back." },
-    { id: "banishment_reached", name: "The King Rises", condition: () => state.banishmentReached, flavour: "You can feel him before you see him." },
-    { id: "king_defeated_1", name: "Hollow Victory", condition: () => state.stats.hollowKingDefeats >= 1, flavour: "He retreated. But he remembered your face." },
-    { id: "king_defeated_2", name: "Twice Broken", condition: () => state.stats.hollowKingDefeats >= 2, flavour: "He expected you this time. It did not help him." },
-    { id: "king_defeated_3", name: "The King Knows Your Name", condition: () => state.stats.hollowKingDefeats >= 3, flavour: "He stopped retreating all the way." },
-    { id: "king_ngplus", name: "The King Is Afraid", condition: () => state.ngPlus && state.stats.hollowKingDefeats >= 1, flavour: "For the first time, he hesitated." },
+    { id: "ritual_available", name: "Something Stirs", hint: "The ritual becomes available.", condition: () => state.ritualAvailable || state.ritualAttempted, flavour: "He has been watching longer than you know." },
+    { id: "ritual_performed", name: "The Sacrifice", hint: "Perform the ritual for the first time.", condition: () => state.ritualAttempted, flavour: "What you gave, you will not get back." },
+    { id: "banishment_reached", name: "The King Rises", hint: "Reach the banishment phase.", condition: () => state.banishmentReached, flavour: "You can feel him before you see him." },
+    { id: "king_defeated_1", name: "Hollow Victory", hint: "Defeat the Hollow King.", condition: () => state.stats.hollowKingDefeats >= 1, flavour: "He retreated. But he remembered your face." },
+    { id: "king_defeated_2", name: "Twice Broken", hint: "Defeat the Hollow King twice.", condition: () => state.stats.hollowKingDefeats >= 2, flavour: "He expected you this time. It did not help him." },
+    { id: "king_defeated_3", name: "The King Knows Your Name", hint: "Defeat the Hollow King three times.", condition: () => state.stats.hollowKingDefeats >= 3, flavour: "He stopped retreating all the way." },
+    { id: "king_ngplus", name: "The King Is Afraid", hint: "Defeat the Hollow King in New Game+.", condition: () => state.ngPlus && state.stats.hollowKingDefeats >= 1, flavour: "For the first time, he hesitated." },
     // Rewards
-    { id: "reward_mark", name: "Marked", condition: () => state.hollowKingRewards.mark, flavour: "The ink does not wash off." },
-    { id: "reward_gift", name: "Gifted", condition: () => state.hollowKingRewards.gift, flavour: "Something looks out through your eyes." },
-    { id: "reward_codex", name: "The Forbidden Page", condition: () => state.hollowKingRewards.codex, flavour: "You were not meant to read this far." },
-    { id: "all_rewards", name: "Complete", condition: () => state.hollowKingRewards.mark && state.hollowKingRewards.gift && state.hollowKingRewards.codex, flavour: "The King gave everything he had. It was not enough." },
+    { id: "reward_mark", name: "Marked", hint: "Claim the Archivist's Mark.", condition: () => state.hollowKingRewards.mark, flavour: "The ink does not wash off." },
+    { id: "reward_gift", name: "Gifted", hint: "Claim the Hollow Gift.", condition: () => state.hollowKingRewards.gift, flavour: "Something looks out through your eyes." },
+    { id: "reward_codex", name: "The Forbidden Page", hint: "Claim the Forbidden Codex.", condition: () => state.hollowKingRewards.codex, flavour: "You were not meant to read this far." },
+    { id: "all_rewards", name: "Complete", hint: "Claim all three Hollow King rewards.", condition: () => state.hollowKingRewards.mark && state.hollowKingRewards.gift && state.hollowKingRewards.codex, flavour: "The King gave everything he had. It was not enough." },
     // Passive income
-    { id: "kps_1", name: "The Archive Breathes", condition: () => state.knowledgePerSecond >= 1, flavour: "It runs without you now." },
-    { id: "kps_10", name: "The Archive Hungers", condition: () => state.knowledgePerSecond >= 10, flavour: "You can hear it consuming." },
-    { id: "kps_100", name: "The Archive Devours", condition: () => state.knowledgePerSecond >= 100, flavour: "It has stopped waiting for you to click." },
-    { id: "kps_1000", name: "The Archive Is Alive", condition: () => state.knowledgePerSecond >= 1000, flavour: "You are not sure it needs you anymore." },
+    { id: "kps_1", name: "The Archive Breathes", hint: "Reach 1 fragment per second.", condition: () => state.knowledgePerSecond >= 1, flavour: "It runs without you now." },
+    { id: "kps_10", name: "The Archive Hungers", hint: "Reach 10 fragments per second.", condition: () => state.knowledgePerSecond >= 10, flavour: "You can hear it consuming." },
+    { id: "kps_100", name: "The Archive Devours", hint: "Reach 100 fragments per second.", condition: () => state.knowledgePerSecond >= 100, flavour: "It has stopped waiting for you to click." },
+    { id: "kps_1000", name: "The Archive Is Alive", hint: "Reach 1,000 fragments per second.", condition: () => state.knowledgePerSecond >= 1000, flavour: "You are not sure it needs you anymore." },
     // Daily
-    { id: "daily_1", name: "You Came Back", condition: () => state.totalDailyBonuses >= 1, flavour: "The archive remembered you." },
-    { id: "daily_7", name: "A Habit Forms", condition: () => state.totalDailyBonuses >= 7, flavour: "You return without deciding to." },
-    { id: "daily_30", name: "The Archive Waits", condition: () => state.totalDailyBonuses >= 30, flavour: "It has always been here. So have you." },
+    { id: "daily_1", name: "You Came Back", hint: "Claim your first daily bonus.", condition: () => state.totalDailyBonuses >= 1, flavour: "The archive remembered you." },
+    { id: "daily_7", name: "A Habit Forms", hint: "Claim 7 daily bonuses.", condition: () => state.totalDailyBonuses >= 7, flavour: "You return without deciding to." },
+    { id: "daily_30", name: "The Archive Waits", hint: "Claim 30 daily bonuses.", condition: () => state.totalDailyBonuses >= 30, flavour: "It has always been here. So have you." },
     // Clicking
-    { id: "clicks_1000", name: "The Hand Learns", condition: () => state.totalClicks >= 1000, flavour: "The motion becomes unconscious." },
-    { id: "clicks_10000", name: "The Hand Forgets", condition: () => state.totalClicks >= 10000, flavour: "You no longer remember starting." },
+    { id: "clicks_1000", name: "The Hand Learns", hint: "Click 1,000 times total.", condition: () => state.totalClicks >= 1000, flavour: "The motion becomes unconscious." },
+    { id: "clicks_10000", name: "The Hand Forgets", hint: "Click 10,000 times total.", condition: () => state.totalClicks >= 10000, flavour: "You no longer remember starting." },
     // Time
-    { id: "time_1h", name: "The Patient One", condition: () => state.totalTimeOpen >= 3600, flavour: "The archive rewards those who stay." },
-    { id: "time_24h", name: "What Are You", condition: () => state.totalTimeOpen >= 86400, flavour: "The line between you and the archive is very thin now." },
+    { id: "time_1h", name: "The Patient One", hint: "Have the game open for 1 hour total.", condition: () => state.totalTimeOpen >= 3600, flavour: "The archive rewards those who stay." },
+    { id: "time_24h", name: "What Are You", hint: "Have the game open for 24 hours total.", condition: () => state.totalTimeOpen >= 86400, flavour: "The line between you and the archive is very thin now." },
 ];
 
 // --- UPGRADE DEFINITIONS ---
@@ -211,7 +211,6 @@ function checkAchievements() {
     });
 }
 
-// Queue system so multiple achievements don't stack on top of each other.
 const achievementQueue = [];
 let achievementShowing = false;
 
@@ -266,6 +265,7 @@ function renderAchievements() {
         ${unlocked.map(d => `
             <div class="achievement-entry unlocked">
                 <div class="achievement-entry-name">✦ ${d.name}</div>
+                <div class="achievement-entry-hint">${d.hint}</div>
                 <div class="achievement-entry-flavour">${d.flavour}</div>
             </div>
         `).join("")}
@@ -307,7 +307,6 @@ setInterval(() => {
 }, 1000);
 
 // --- TIME TRACKING LOOP ---
-// Updates total time open every 10 seconds and checks time achievements.
 setInterval(() => {
     state.totalTimeOpen += 10;
     checkAchievements();
@@ -556,7 +555,6 @@ function doPrestige() {
     state.ritualAvailable = false;
 
     const ritualUnlockThreshold = state.ngPlus ? 8 : 5;
-
     if (state.prestige.count > ritualUnlockThreshold) {
         const allRewardsClaimed = state.hollowKingRewards.codex && state.hollowKingRewards.mark && state.hollowKingRewards.gift;
         if (!allRewardsClaimed && Math.random() < 0.3) {
@@ -635,9 +633,7 @@ function showRitualOverlay() {
         setTimeout(() => showBanishmentOverlay(), 500);
     };
 
-    document.getElementById("ritual-cancel-btn").onclick = () => {
-        removeOverlay("ritual-overlay");
-    };
+    document.getElementById("ritual-cancel-btn").onclick = () => removeOverlay("ritual-overlay");
 }
 
 // --- RITUAL OVERLAY — PHASE 2: BANISHMENT ---
@@ -810,7 +806,6 @@ function showVictoryOverlay() {
 // --- CLAIM REWARD ---
 function claimReward(rewardId) {
     if (!state.hollowKingRewards[rewardId]) state.stats.hollowKingDefeats++;
-
     state.hollowKingRewards[rewardId] = true;
     state.ritualAvailable = false;
 
@@ -1275,9 +1270,7 @@ function checkDailyBonus() {
 
     if (lastVisit !== today) {
         localStorage.setItem("archivist_last_visit", today);
-        if (lastVisit) {
-            setTimeout(() => showDailyBonus(), 1500);
-        }
+        if (lastVisit) setTimeout(() => showDailyBonus(), 1500);
     }
 }
 
