@@ -566,6 +566,15 @@ body {
     letter-spacing: 1px;
 }
 
+.achievement-entry-hint {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.75rem;
+    color: #3a2a10;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    font-style: normal;
+}
+
 .achievement-entry.unlocked .achievement-entry-flavour {
     font-family: 'Crimson Text', serif;
     font-size: 0.8rem;
