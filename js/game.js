@@ -148,6 +148,79 @@ function formatNumber(n) {
     return Math.floor(n).toString();
 }
 
+// --- PANEL SYSTEM ---
+let leftPanelOpen = false;
+let rightPanelOpen = false;
+
+function openPanel(side) {
+    const panel = document.getElementById(side + "-panel");
+    const backdrop = document.getElementById("panel-backdrop");
+    const isMobile = window.innerWidth <= 768;
+
+    if (side === "left") {
+        leftPanelOpen = true;
+        panel.classList.add("open");
+        document.getElementById("toggle-left-panel").classList.add("active");
+        document.getElementById("mobile-left-tab").classList.add("active");
+        if (!isMobile) document.body.classList.add("left-open");
+    } else {
+        rightPanelOpen = true;
+        panel.classList.add("open");
+        document.getElementById("toggle-right-panel").classList.add("active");
+        document.getElementById("mobile-right-tab").classList.add("active");
+        if (!isMobile) document.body.classList.add("right-open");
+    }
+
+    if (isMobile) {
+        backdrop.classList.add("visible");
+    }
+}
+
+function closePanel(side) {
+    const panel = document.getElementById(side + "-panel");
+    const backdrop = document.getElementById("panel-backdrop");
+
+    if (side === "left") {
+        leftPanelOpen = false;
+        panel.classList.remove("open");
+        document.getElementById("toggle-left-panel").classList.remove("active");
+        document.getElementById("mobile-left-tab").classList.remove("active");
+        document.body.classList.remove("left-open");
+    } else {
+        rightPanelOpen = false;
+        panel.classList.remove("open");
+        document.getElementById("toggle-right-panel").classList.remove("active");
+        document.getElementById("mobile-right-tab").classList.remove("active");
+        document.body.classList.remove("right-open");
+    }
+
+    if (!leftPanelOpen && !rightPanelOpen) {
+        backdrop.classList.remove("visible");
+    }
+}
+
+function togglePanel(side) {
+    if (side === "left") {
+        leftPanelOpen ? closePanel("left") : openPanel("left");
+    } else {
+        rightPanelOpen ? closePanel("right") : openPanel("right");
+    }
+}
+
+// Panel toggle button listeners.
+document.getElementById("toggle-left-panel").onclick = () => togglePanel("left");
+document.getElementById("toggle-right-panel").onclick = () => togglePanel("right");
+document.getElementById("left-panel-close").onclick = () => closePanel("left");
+document.getElementById("right-panel-close").onclick = () => closePanel("right");
+document.getElementById("mobile-left-tab").onclick = () => togglePanel("left");
+document.getElementById("mobile-right-tab").onclick = () => togglePanel("right");
+
+// Close panels on backdrop click.
+document.getElementById("panel-backdrop").onclick = () => {
+    closePanel("left");
+    closePanel("right");
+};
+
 // --- ACHIEVEMENT SYSTEM ---
 function checkAchievements() {
     achievementDefs.forEach(def => {
@@ -186,9 +259,7 @@ function processAchievementQueue() {
     document.body.appendChild(el);
 
     requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            el.classList.add("visible");
-        });
+        requestAnimationFrame(() => { el.classList.add("visible"); });
     });
 
     setTimeout(() => {
@@ -266,6 +337,7 @@ function updateDisplay() {
     fpsEl.textContent = isNaN(kps) ? "0.0" : kps.toFixed(1);
     renderUpgrades();
     renderPrestige();
+    renderFloatingActions();
     renderStatusIndicator();
 }
 
@@ -279,9 +351,7 @@ function getUpgradeCost(def) {
 
 // --- UPGRADE AVAILABILITY CHECK ---
 function isUpgradeUnlocked(def) {
-    if (def.paleLibrarianOnly) {
-        return state.paleLibrarianRewards.whitePage;
-    }
+    if (def.paleLibrarianOnly) return state.paleLibrarianRewards.whitePage;
     return state.prestige.count >= def.requiredDescent;
 }
 
@@ -308,16 +378,12 @@ function recalculateKps() {
     state.knowledgePerSecond = total;
 }
 
-// --- UPGRADE RENDERER ---
+// --- UPGRADE RENDERER (left panel) ---
 let upgradesBuilt = false;
 
 function renderUpgrades() {
-    let container = document.getElementById("upgrade-container");
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "upgrade-container";
-        document.getElementById("game-container").appendChild(container);
-    }
+    const container = document.getElementById("upgrade-container");
+    if (!container) return;
 
     const unlockedDefs = upgradeDefs.filter(isUpgradeUnlocked);
     const unlockedCount = unlockedDefs.length;
@@ -344,9 +410,9 @@ function renderUpgrades() {
         if (!btn) return;
         btn.className = "upgrade-btn" + (canAfford ? " affordable" : "") + (def.paleLibrarianOnly ? " nameless" : "");
         btn.innerHTML = `
-            <strong>${def.name}</strong> (owned: ${owned})<br/>
+            <strong>${def.name}</strong> (${owned})<br/>
             <small>${def.description}</small><br/>
-            Cost: ${formatNumber(cost)} knowledge
+            ${formatNumber(cost)} knowledge
         `;
     });
 }
@@ -366,18 +432,8 @@ function checkMilestones() {
 
 // --- LORE PANEL DISPLAY ---
 function showLore(title, text) {
-    let panel = document.getElementById("lore-panel");
-    if (!panel) {
-        panel = document.createElement("div");
-        panel.id = "lore-panel";
-        panel.innerHTML = `<div id="lore-title"></div><div id="lore-text"></div>`;
-        const upgradeContainer = document.getElementById("upgrade-container");
-        if (upgradeContainer) {
-            document.getElementById("game-container").insertBefore(panel, upgradeContainer);
-        } else {
-            document.getElementById("game-container").appendChild(panel);
-        }
-    }
+    const panel = document.getElementById("lore-panel");
+    if (!panel) return;
 
     const cleanText = text.replace(/#{1,6}\s*/g, "").replace(/\*\*/g, "").replace(/\*/g, "").replace(/\n+/g, " ").trim();
     const cleanTitle = title.replace(/#{1,6}\s*/g, "").replace(/\*\*/g, "").replace(/\*/g, "").trim();
@@ -389,9 +445,7 @@ function showLore(title, text) {
     document.getElementById("lore-text").textContent = cleanText;
 
     requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            panel.classList.add("visible");
-        });
+        requestAnimationFrame(() => { panel.classList.add("visible"); });
     });
 
     setTimeout(() => panel.classList.remove("visible"), 12000);
@@ -413,76 +467,123 @@ async function triggerLoreEvent(milestone) {
     }
 }
 
-// --- PRESTIGE RENDERER ---
-let prestigeBuilt = false;
+// --- FLOATING ACTIONS RENDERER ---
+// Renders Descend / Ritual / Pale Librarian buttons in the center column
+// so they are always visible and never buried below upgrades.
+function renderFloatingActions() {
+    const container = document.getElementById("floating-actions");
+    if (!container) return;
 
-function renderPrestige() {
-    let container = document.getElementById("prestige-container");
-    if (!container) {
-        container = document.createElement("div");
-        container.id = "prestige-container";
-        document.getElementById("game-container").appendChild(container);
-    }
+    container.innerHTML = "";
 
     const { count, bonus, threshold } = state.prestige;
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
+
+    if (state.ritualAvailable) {
+        const hint = document.createElement("div");
+        hint.id = "floating-ritual-hint";
+        hint.textContent = "✦ Something stirs in the depths ✦";
+        container.appendChild(hint);
+    }
+
+    if (state.paleLibrarianAvailable) {
+        const hint = document.createElement("div");
+        hint.id = "floating-pale-hint";
+        hint.textContent = "✦ A pale light moves between the shelves ✦";
+        container.appendChild(hint);
+    }
+
+    if (canPrestige) {
+        const btn = document.createElement("button");
+        btn.id = "floating-prestige-btn";
+        btn.textContent = `Descend Deeper — next bonus: ${nextBonus}%`;
+        btn.onclick = doPrestige;
+        container.appendChild(btn);
+    }
+
+    if (state.ritualAvailable) {
+        const btn = document.createElement("button");
+        btn.id = "floating-ritual-btn";
+        btn.textContent = "Perform the Ritual";
+        btn.onclick = showRitualOverlay;
+        container.appendChild(btn);
+    }
+
+    if (state.paleLibrarianAvailable) {
+        const btn = document.createElement("button");
+        btn.id = "floating-pale-btn";
+        btn.textContent = "The Pale Librarian Waits";
+        btn.onclick = showPaleLibrarianWarning;
+        container.appendChild(btn);
+    }
+}
+
+// --- PRESTIGE RENDERER (right panel) ---
+let prestigeBuilt = false;
+
+function renderPrestige() {
+    const { count, bonus, threshold } = state.prestige;
     const nextUnlock = upgradeDefs.find(d => !d.paleLibrarianOnly && d.requiredDescent === count + 1);
 
-    if (!prestigeBuilt) {
-        container.innerHTML = `
-            <div id="prestige-info">
-                Descent level: <span id="descent-level">${count}</span> &nbsp;|&nbsp;
-                Knowledge multiplier: <span id="knowledge-multiplier">${bonus.toFixed(1)}x</span>
-            </div>
-            <div id="next-unlock-info"></div>
-            <div id="ritual-hint-container"></div>
-            <div id="action-buttons">
-                <button id="save-btn">✦ Save Progress</button>
-                <button id="kofi-btn">Support the Archive</button>
-            </div>
-            <div id="save-indicator"></div>
-            <button id="prestige-btn" style="display:none;">Descend Deeper</button>
-            <button id="ritual-btn" style="display:none;">Perform the Ritual</button>
-            <button id="pale-librarian-btn" style="display:none;">The Pale Librarian Waits</button>
-            <button id="reset-btn">Reset all progress</button>
-        `;
+    // Update prestige info panel.
+    const descentEl = document.getElementById("descent-level");
+    const multiplierEl = document.getElementById("knowledge-multiplier");
+    if (descentEl) descentEl.textContent = count;
+    if (multiplierEl) multiplierEl.textContent = bonus.toFixed(1) + "x";
 
-        document.getElementById("save-btn").onclick = saveGame;
-        document.getElementById("reset-btn").onclick = confirmReset;
-        document.getElementById("prestige-btn").onclick = doPrestige;
-        document.getElementById("kofi-btn").onclick = showSupportOverlay;
-        document.getElementById("ritual-btn").onclick = showRitualOverlay;
-        document.getElementById("pale-librarian-btn").onclick = showPaleLibrarianWarning;
+    const unlockInfo = document.getElementById("next-unlock-info");
+    if (unlockInfo) {
+        if (nextUnlock) {
+            unlockInfo.textContent = `Next descent unlocks: ${nextUnlock.name}`;
+            unlockInfo.style.display = "block";
+        } else {
+            unlockInfo.style.display = "none";
+        }
+    }
+
+    // Build the right panel actions once.
+    if (!prestigeBuilt) {
+        const saveBtn = document.getElementById("save-btn");
+        const resetBtn = document.getElementById("reset-btn");
+        const kofiBtn = document.getElementById("kofi-btn");
+        const prestigeBtn = document.getElementById("prestige-btn");
+        const ritualBtn = document.getElementById("ritual-btn");
+        const paleBtn = document.getElementById("pale-librarian-btn");
+
+        if (saveBtn) saveBtn.onclick = saveGame;
+        if (resetBtn) resetBtn.onclick = confirmReset;
+        if (kofiBtn) kofiBtn.onclick = showSupportOverlay;
+        if (prestigeBtn) prestigeBtn.onclick = doPrestige;
+        if (ritualBtn) ritualBtn.onclick = showRitualOverlay;
+        if (paleBtn) paleBtn.onclick = showPaleLibrarianWarning;
+
         prestigeBuilt = true;
     }
 
-    document.getElementById("descent-level").textContent = count;
-    document.getElementById("knowledge-multiplier").textContent = bonus.toFixed(1) + "x";
-
-    const unlockInfo = document.getElementById("next-unlock-info");
-    if (nextUnlock) {
-        unlockInfo.textContent = `Next descent unlocks: ${nextUnlock.name}`;
-        unlockInfo.style.display = "block";
-    } else {
-        unlockInfo.style.display = "none";
-    }
-
-    const ritualHintContainer = document.getElementById("ritual-hint-container");
-    let hintHTML = "";
-    if (state.ritualAvailable) hintHTML += `<div id="ritual-hint">✦ Something stirs in the depths ✦</div>`;
-    if (state.paleLibrarianAvailable) hintHTML += `<div id="pale-librarian-hint">✦ A pale light moves between the shelves ✦</div>`;
-    ritualHintContainer.innerHTML = hintHTML;
+    // Keep right panel buttons in sync (secondary — floating strip is primary).
+    const canPrestige = state.knowledge >= threshold;
+    const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
 
     const prestigeBtn = document.getElementById("prestige-btn");
-    prestigeBtn.textContent = `Descend Deeper (next bonus: ${nextBonus}%)`;
-    prestigeBtn.style.display = canPrestige ? "inline-block" : "none";
+    if (prestigeBtn) {
+        prestigeBtn.textContent = `Descend Deeper (${nextBonus}%)`;
+        prestigeBtn.style.display = canPrestige ? "block" : "none";
+    }
 
     const ritualBtn = document.getElementById("ritual-btn");
-    ritualBtn.style.display = state.ritualAvailable ? "inline-block" : "none";
+    if (ritualBtn) ritualBtn.style.display = state.ritualAvailable ? "block" : "none";
 
     const paleBtn = document.getElementById("pale-librarian-btn");
-    paleBtn.style.display = state.paleLibrarianAvailable ? "inline-block" : "none";
+    if (paleBtn) paleBtn.style.display = state.paleLibrarianAvailable ? "block" : "none";
+
+    const ritualHintContainer = document.getElementById("ritual-hint-container");
+    if (ritualHintContainer) {
+        let hintHTML = "";
+        if (state.ritualAvailable) hintHTML += `<div id="ritual-hint">✦ Something stirs ✦</div>`;
+        if (state.paleLibrarianAvailable) hintHTML += `<div id="pale-librarian-hint">✦ A pale light ✦</div>`;
+        ritualHintContainer.innerHTML = hintHTML;
+    }
 }
 
 // --- PRESTIGE ACTION ---
@@ -494,7 +595,6 @@ function doPrestige() {
 
     state.knowledge = 0;
     state.knowledgePerClick = state.hollowKingRewards.mark ? (state.ngPlus ? 3 : 2) : 1;
-    if (state.paleLibrarianRewards.paleGift) state.knowledgePerClick += 0;
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
     state.loreLog = [];
@@ -513,16 +613,11 @@ function doPrestige() {
     const ritualUnlockThreshold = state.ngPlus ? 8 : 5;
     if (state.prestige.count > ritualUnlockThreshold) {
         const allHollowRewardsClaimed = state.hollowKingRewards.codex && state.hollowKingRewards.mark && state.hollowKingRewards.gift;
-        if (!allHollowRewardsClaimed && Math.random() < 0.3) {
-            state.ritualAvailable = true;
-        }
+        if (!allHollowRewardsClaimed && Math.random() < 0.3) state.ritualAvailable = true;
     }
 
-    // Pale Librarian triggers in NG+ after descent 5 if not yet defeated.
     if (state.ngPlus && state.prestige.count > 5 && !state.paleLibrarianDefeated) {
-        if (Math.random() < 0.3) {
-            state.paleLibrarianAvailable = true;
-        }
+        if (Math.random() < 0.3) state.paleLibrarianAvailable = true;
     }
 
     checkAchievements();
@@ -596,9 +691,7 @@ function showPaleLibrarianWarning() {
         setTimeout(() => showPaleLibrarianSilence(), 500);
     };
 
-    document.getElementById("pale-librarian-cancel-btn").onclick = () => {
-        removeOverlay("pale-librarian-warning");
-    };
+    document.getElementById("pale-librarian-cancel-btn").onclick = () => removeOverlay("pale-librarian-warning");
 }
 
 // --- PALE LIBRARIAN — PHASE 2: SILENCE ---
@@ -615,7 +708,7 @@ function showPaleLibrarianSilence() {
     overlay.innerHTML = `
         <div class="overlay-box pale-box">
             <div class="overlay-title pale-title">Be Still</div>
-            <div class="overlay-text" id="pale-silence-text">
+            <div class="overlay-text">
                 It is watching.<br><br>
                 <em id="pale-timer">20</em>
             </div>
@@ -628,7 +721,6 @@ function showPaleLibrarianSilence() {
     document.body.appendChild(overlay);
     fadeIn(overlay);
 
-    // Any click anywhere on the document fails the challenge.
     function onAnyClick() {
         if (concluded) return;
         concluded = true;
@@ -638,8 +730,6 @@ function showPaleLibrarianSilence() {
         setTimeout(() => showPaleLibrarianFailed(), 500);
     }
 
-    // Delay attaching the click listener slightly so the "I am ready"
-    // button click does not immediately trigger a failure.
     setTimeout(() => {
         if (!concluded) document.addEventListener("click", onAnyClick);
     }, 600);
@@ -729,9 +819,7 @@ function showPaleLibrarianVictory() {
         `);
     }
 
-    const allClaimed = state.paleLibrarianRewards.paleGift &&
-        state.paleLibrarianRewards.stillArchive &&
-        state.paleLibrarianRewards.whitePage;
+    const allClaimed = state.paleLibrarianRewards.paleGift && state.paleLibrarianRewards.stillArchive && state.paleLibrarianRewards.whitePage;
 
     const overlay = document.createElement("div");
     overlay.id = "pale-victory-overlay";
@@ -765,10 +853,8 @@ function showPaleLibrarianVictory() {
 
     const giftBtn = document.getElementById("pale-reward-gift");
     if (giftBtn) giftBtn.onclick = () => claimPaleReward("paleGift");
-
     const archiveBtn = document.getElementById("pale-reward-archive");
     if (archiveBtn) archiveBtn.onclick = () => claimPaleReward("stillArchive");
-
     const pageBtn = document.getElementById("pale-reward-page");
     if (pageBtn) pageBtn.onclick = () => claimPaleReward("whitePage");
 
@@ -778,7 +864,6 @@ function showPaleLibrarianVictory() {
         saveGame();
     };
 
-    // Trigger the revelation lore.
     setTimeout(() => triggerPaleLibrarianLore(), 1000);
 }
 
@@ -786,12 +871,8 @@ function showPaleLibrarianVictory() {
 function claimPaleReward(rewardId) {
     state.paleLibrarianRewards[rewardId] = true;
 
-    if (rewardId === "paleGift") {
-        state.prestige.bonus *= 2;
-    }
-    if (rewardId === "stillArchive") {
-        state.upgradeCostModifier = 0.8;
-    }
+    if (rewardId === "paleGift") state.prestige.bonus *= 2;
+    if (rewardId === "stillArchive") state.upgradeCostModifier = 0.8;
     if (rewardId === "whitePage") {
         upgradesBuilt = false;
         recalculateKps();
@@ -881,9 +962,9 @@ function showBanishmentOverlay() {
     overlay.id = "banishment-overlay";
     overlay.className = "overlay-screen";
     overlay.innerHTML = `
-        <div class="overlay-box" id="banishment-box">
-            <div class="overlay-title" id="banishment-title">The Hollow King Rises</div>
-            <div class="overlay-text" id="banishment-text">
+        <div class="overlay-box">
+            <div class="overlay-title">The Hollow King Rises</div>
+            <div class="overlay-text">
                 He is here. Drive him back before the darkness takes hold.<br><br>
                 <em id="banishment-timer">Time remaining: 30s</em>
             </div>
@@ -1200,7 +1281,7 @@ function showSupportOverlay() {
                 <em>The Archivist remembers those who gave. And those who simply stayed.</em>
             </div>
             <div class="overlay-buttons">
-                <a id="support-proceed-btn" href="https://ko-fi.com/thearchivistgame" target="_blank">Leave an Offering</a>
+                <a href="https://ko-fi.com/thearchivistgame" target="_blank">Leave an Offering</a>
                 <button id="support-dismiss-btn">Return to the Archive</button>
             </div>
         </div>
@@ -1224,28 +1305,28 @@ function renderStats() {
         : sessionMinutes > 0 ? `${sessionMinutes}m ${sessionSeconds % 60}s` : `${sessionSeconds}s`;
 
     const hollowRewardsList = [
-        state.hollowKingRewards.codex ? "The Forbidden Codex" : null,
-        state.hollowKingRewards.mark ? "The Archivist's Mark" : null,
-        state.hollowKingRewards.gift ? "The Hollow Gift" : null
+        state.hollowKingRewards.codex ? "Codex" : null,
+        state.hollowKingRewards.mark ? "Mark" : null,
+        state.hollowKingRewards.gift ? "Gift" : null
     ].filter(Boolean);
 
     const paleRewardsList = [
-        state.paleLibrarianRewards.paleGift ? "The Pale Gift" : null,
-        state.paleLibrarianRewards.stillArchive ? "The Still Archive" : null,
-        state.paleLibrarianRewards.whitePage ? "The White Page" : null
+        state.paleLibrarianRewards.paleGift ? "Pale Gift" : null,
+        state.paleLibrarianRewards.stillArchive ? "Still Archive" : null,
+        state.paleLibrarianRewards.whitePage ? "White Page" : null
     ].filter(Boolean);
 
     panel.innerHTML = `
-        <div class="stats-row"><span>Fragments recovered (lifetime)</span><span>${formatNumber(state.stats.totalFragmentsEver)}</span></div>
-        <div class="stats-row"><span>Descents completed</span><span>${state.stats.totalDescents}</span></div>
+        <div class="stats-row"><span>Fragments (lifetime)</span><span>${formatNumber(state.stats.totalFragmentsEver)}</span></div>
+        <div class="stats-row"><span>Descents</span><span>${state.stats.totalDescents}</span></div>
         <div class="stats-row"><span>Hollow King defeats</span><span>${state.stats.hollowKingDefeats}</span></div>
         <div class="stats-row"><span>Pale Librarian defeats</span><span>${state.stats.paleLibrarianDefeats}</span></div>
-        <div class="stats-row"><span>Hollow King rewards</span><span>${hollowRewardsList.length > 0 ? hollowRewardsList.join(", ") : "None"}</span></div>
-        <div class="stats-row"><span>Pale Librarian rewards</span><span>${paleRewardsList.length > 0 ? paleRewardsList.join(", ") : "None"}</span></div>
+        <div class="stats-row"><span>King rewards</span><span>${hollowRewardsList.length > 0 ? hollowRewardsList.join(", ") : "None"}</span></div>
+        <div class="stats-row"><span>Librarian rewards</span><span>${paleRewardsList.length > 0 ? paleRewardsList.join(", ") : "None"}</span></div>
         <div class="stats-row"><span>Total clicks</span><span>${formatNumber(state.totalClicks)}</span></div>
-        <div class="stats-row"><span>Daily bonuses claimed</span><span>${state.totalDailyBonuses}</span></div>
+        <div class="stats-row"><span>Daily bonuses</span><span>${state.totalDailyBonuses}</span></div>
         <div class="stats-row"><span>Achievements</span><span>${state.achievementsUnlocked.size} / ${achievementDefs.length}</span></div>
-        <div class="stats-row"><span>Current descent level</span><span>${state.prestige.count}</span></div>
+        <div class="stats-row"><span>Descent level</span><span>${state.prestige.count}</span></div>
         <div class="stats-row"><span>Session time</span><span>${timeStr}</span></div>
         ${state.ngPlus ? `<div class="stats-row ngplus-row"><span>Mode</span><span>Second Archive</span></div>` : ""}
     `;
@@ -1433,9 +1514,7 @@ function spawnRipple(e) {
 // --- UTILITY: FADE IN ---
 function fadeIn(el) {
     requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            el.classList.add("visible");
-        });
+        requestAnimationFrame(() => { el.classList.add("visible"); });
     });
 }
 
@@ -1472,47 +1551,28 @@ htpToggle.addEventListener("click", () => {
     }
 });
 
-// --- STATS SECTION TOGGLE ---
-const statsBtn = document.getElementById("stats-btn");
-const statsPanelEl = document.getElementById("stats-panel");
-let statsVisible = false;
+// --- PANEL SECTION TOGGLES (right panel) ---
+function setupPanelToggle(btnId, panelId, openLabel, closedLabel) {
+    const btn = document.getElementById(btnId);
+    const panel = document.getElementById(panelId);
+    if (!btn || !panel) return;
 
-if (statsBtn) {
-    statsBtn.addEventListener("click", () => {
-        statsVisible = !statsVisible;
-        statsPanelEl.style.display = statsVisible ? "block" : "none";
-        statsBtn.textContent = statsVisible ? "View Archive Records ▴" : "View Archive Records ▾";
-        if (statsVisible) renderStats();
+    let visible = false;
+    btn.addEventListener("click", () => {
+        visible = !visible;
+        panel.style.display = visible ? "block" : "none";
+        btn.textContent = visible ? openLabel : closedLabel;
+        if (visible) {
+            if (panelId === "stats-panel") renderStats();
+            if (panelId === "lore-archive-panel") renderLoreArchive();
+            if (panelId === "achievements-panel") renderAchievements();
+        }
     });
 }
 
-// --- LORE ARCHIVE TOGGLE ---
-const loreArchiveBtn = document.getElementById("lore-archive-btn");
-const loreArchivePanelEl = document.getElementById("lore-archive-panel");
-let loreArchiveVisible = false;
-
-if (loreArchiveBtn) {
-    loreArchiveBtn.addEventListener("click", () => {
-        loreArchiveVisible = !loreArchiveVisible;
-        loreArchivePanelEl.style.display = loreArchiveVisible ? "block" : "none";
-        loreArchiveBtn.textContent = loreArchiveVisible ? "View Recovered Fragments ▴" : "View Recovered Fragments ▾";
-        if (loreArchiveVisible) renderLoreArchive();
-    });
-}
-
-// --- ACHIEVEMENTS TOGGLE ---
-const achievementsBtn = document.getElementById("achievements-btn");
-const achievementsPanelEl = document.getElementById("achievements-panel");
-let achievementsVisible = false;
-
-if (achievementsBtn) {
-    achievementsBtn.addEventListener("click", () => {
-        achievementsVisible = !achievementsVisible;
-        achievementsPanelEl.style.display = achievementsVisible ? "block" : "none";
-        achievementsBtn.textContent = achievementsVisible ? "View Achievements ▴" : "View Achievements ▾";
-        if (achievementsVisible) renderAchievements();
-    });
-}
+setupPanelToggle("stats-btn", "stats-panel", "Archive Records ▴", "Archive Records ▾");
+setupPanelToggle("lore-archive-btn", "lore-archive-panel", "Recovered Fragments ▴", "Recovered Fragments ▾");
+setupPanelToggle("achievements-btn", "achievements-panel", "Achievements ▴", "Achievements ▾");
 
 // --- DAILY BONUS ---
 function checkDailyBonus() {
@@ -1572,9 +1632,11 @@ function showDailyBonusTimer() {
     if (!timer) {
         timer = document.createElement("div");
         timer.id = "daily-bonus-timer";
-        const knowledgeDisplay = document.getElementById("knowledge-display");
-        if (knowledgeDisplay && knowledgeDisplay.nextSibling) {
-            document.getElementById("game-container").insertBefore(timer, knowledgeDisplay.nextSibling);
+        const perSecond = document.getElementById("per-second");
+        if (perSecond && perSecond.nextSibling) {
+            document.getElementById("game-container").insertBefore(timer, perSecond.nextSibling);
+        } else {
+            document.getElementById("game-container").appendChild(timer);
         }
     }
 
