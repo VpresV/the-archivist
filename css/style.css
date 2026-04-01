@@ -2,48 +2,260 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 
+:root {
+    --gold: #e8c87a;
+    --gold-dim: #c9a96e;
+    --gold-dark: #a08050;
+    --gold-darker: #6b5030;
+    --gold-deep: #5a3e1b;
+    --gold-deepest: #3a2a10;
+    --bg: #0a0a0a;
+    --bg-warm: #150f00;
+    --bg-card: #0d0800;
+    --bg-card2: #1a0f00;
+    --border: #3a2a10;
+    --border-bright: #5a3e1b;
+    --red: #e87a7a;
+    --purple: #c87ae8;
+    --purple-border: #5a1b8a;
+    --pale-blue: #a0c0d0;
+    --pale-border: #2a4a5a;
+    --pale-bg: #080e14;
+    --panel-width: 300px;
+    --panel-bg: #09070200;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
-    background-color: #0a0a0a;
-    background-image: radial-gradient(ellipse at top, #1a0a0a 0%, #0a0a0a 70%);
-    color: #c9a96e;
-    font-family: 'Crimson Text', Georgia, serif;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 40px 20px;
+html, body {
+    height: 100%;
+    overflow-x: hidden;
 }
 
+body {
+    background-color: var(--bg);
+    background-image: radial-gradient(ellipse at top, #1a0a0a 0%, var(--bg) 70%);
+    color: var(--gold-dim);
+    font-family: 'Crimson Text', Georgia, serif;
+    min-height: 100vh;
+}
+
+/* ============================================================
+   THREE-ZONE LAYOUT
+   ============================================================ */
+
+/* Side panels — fixed, full height, slide in from sides */
+.side-panel {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: var(--panel-width);
+    background: linear-gradient(180deg, #0d0800 0%, #080500 100%);
+    border-color: var(--border);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+#left-panel {
+    left: 0;
+    border-right: 1px solid var(--border);
+    transform: translateX(-100%);
+}
+
+#right-panel {
+    right: 0;
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+}
+
+#left-panel.open {
+    transform: translateX(0);
+}
+
+#right-panel.open {
+    transform: translateX(0);
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.panel-header-title {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.75rem;
+    color: var(--gold-dark);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+}
+
+.panel-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--gold-deepest);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding: 4px;
+    line-height: 1;
+}
+
+.panel-close-btn:hover {
+    color: var(--gold-darker);
+}
+
+.panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.panel-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.panel-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.panel-body::-webkit-scrollbar-thumb {
+    background: var(--border);
+}
+
+/* Center column */
 #game-container {
-    width: 100%;
-    max-width: 900px;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    padding: 48px 24px 80px 24px;
+    gap: 18px;
+    max-width: 560px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
+
+/* Backdrop for mobile panel overlay */
+#panel-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 99;
+}
+
+#panel-backdrop.visible {
+    display: block;
+}
+
+/* ============================================================
+   PANEL TOGGLE BUTTONS (desktop)
+   ============================================================ */
+
+#panel-toggles {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.panel-toggle-btn {
+    background: transparent;
+    color: var(--gold-deepest);
+    border: 1px solid #1a0a00;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.8rem;
+    padding: 6px 16px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s ease;
+}
+
+.panel-toggle-btn:hover {
+    color: var(--gold-darker);
+    border-color: var(--border);
+}
+
+.panel-toggle-btn.active {
+    color: var(--gold-dim);
+    border-color: var(--gold-deep);
+}
+
+/* ============================================================
+   MOBILE TABS
+   ============================================================ */
+
+.mobile-tab {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
+    border: 1px solid var(--border);
+    border-bottom: none;
+    color: var(--gold-darker);
+    font-family: 'Crimson Text', serif;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    padding: 8px 14px;
+    cursor: pointer;
+    z-index: 101;
+    transition: all 0.2s ease;
+}
+
+.mobile-tab-left {
+    left: 0;
+    border-left: none;
+    border-radius: 0 6px 0 0;
+}
+
+.mobile-tab-right {
+    right: 0;
+    border-right: none;
+    border-radius: 6px 0 0 0;
+}
+
+.mobile-tab:hover {
+    color: var(--gold-dim);
+}
+
+.mobile-tab.active {
+    color: var(--gold);
+    border-color: var(--gold-deep);
+}
+
+/* ============================================================
+   TITLE & CORE DISPLAY
+   ============================================================ */
 
 #game-title {
     font-family: 'Cinzel Decorative', cursive;
-    font-size: 3.5rem;
-    color: #e8c87a;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    color: var(--gold);
     text-shadow:
         0 0 20px rgba(200, 150, 50, 0.5),
         0 0 60px rgba(200, 100, 20, 0.2);
     letter-spacing: 4px;
-    margin-bottom: 10px;
     text-align: center;
 }
 
 #mark-indicator {
     font-family: 'Crimson Text', serif;
-    font-size: 0.85rem;
-    color: #e8c87a;
+    font-size: 0.8rem;
+    color: var(--gold);
     letter-spacing: 3px;
     text-align: center;
     font-style: italic;
@@ -52,7 +264,7 @@ body {
 
 #ngplus-indicator {
     font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #8a2a2a;
     letter-spacing: 2px;
     text-align: center;
@@ -62,8 +274,8 @@ body {
 
 #pale-indicator {
     font-family: 'Crimson Text', serif;
-    font-size: 0.85rem;
-    color: #a0b0c0;
+    font-size: 0.8rem;
+    color: var(--pale-blue);
     letter-spacing: 3px;
     text-align: center;
     font-style: italic;
@@ -71,34 +283,189 @@ body {
 }
 
 #knowledge-display {
-    font-size: 1.4rem;
-    color: #a08050;
+    font-size: 1.3rem;
+    color: var(--gold-dark);
     letter-spacing: 2px;
+    text-align: center;
 }
 
 #knowledge-count {
-    color: #e8c87a;
+    color: var(--gold);
     font-weight: 600;
     font-size: 1.6rem;
+}
+
+#per-second {
+    font-size: 0.9rem;
+    color: var(--gold-deeper, #4a3010);
+    letter-spacing: 1px;
+    font-style: italic;
+    text-align: center;
+    color: #4a3010;
 }
 
 #daily-bonus-timer {
     font-family: 'Crimson Text', serif;
     font-size: 0.85rem;
-    color: #e8c87a;
+    color: var(--gold);
     letter-spacing: 2px;
     text-align: center;
     font-style: italic;
     animation: pulse 2s infinite;
 }
 
+/* ============================================================
+   FLOATING ACTIONS STRIP
+   ============================================================ */
+
+#floating-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-height: 0;
+}
+
+#floating-actions:empty {
+    display: none;
+}
+
+#floating-prestige-btn {
+    background: linear-gradient(145deg, #1a0000, #2d0a00);
+    color: var(--red);
+    border: 1px solid #5a1b1b;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.05rem;
+    padding: 12px 28px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 15px rgba(200, 50, 50, 0.1);
+    width: 100%;
+    max-width: 380px;
+}
+
+#floating-prestige-btn:hover {
+    box-shadow: 0 0 25px rgba(200, 50, 50, 0.3);
+    color: #ffaaaa;
+    transform: translateY(-1px);
+}
+
+#floating-ritual-btn {
+    background: linear-gradient(145deg, #0a001a, #1a0030);
+    color: var(--purple);
+    border: 1px solid var(--purple-border);
+    font-family: 'Crimson Text', serif;
+    font-size: 1.05rem;
+    padding: 12px 28px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 15px rgba(150, 50, 200, 0.1);
+    width: 100%;
+    max-width: 380px;
+}
+
+#floating-ritual-btn:hover {
+    box-shadow: 0 0 25px rgba(150, 50, 200, 0.3);
+    color: #e8aaff;
+    transform: translateY(-1px);
+}
+
+#floating-pale-btn {
+    background: linear-gradient(145deg, var(--pale-bg), #0f1a24);
+    color: #8ab0c0;
+    border: 1px solid var(--pale-border);
+    font-family: 'Crimson Text', serif;
+    font-size: 1.05rem;
+    padding: 12px 28px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 15px rgba(100, 150, 200, 0.1);
+    width: 100%;
+    max-width: 380px;
+}
+
+#floating-pale-btn:hover {
+    box-shadow: 0 0 25px rgba(100, 150, 200, 0.25);
+    color: #c0dce8;
+    transform: translateY(-1px);
+}
+
+#floating-ritual-hint,
+#floating-pale-hint {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.85rem;
+    font-style: italic;
+    letter-spacing: 2px;
+    text-align: center;
+    animation: pulse 2s infinite;
+}
+
+#floating-ritual-hint {
+    color: #8a3a3a;
+}
+
+#floating-pale-hint {
+    color: #6a8a9a;
+}
+
+/* ============================================================
+   LORE PANEL
+   ============================================================ */
+
+#lore-panel {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: linear-gradient(145deg, var(--bg-card), var(--bg-warm));
+    padding: 0 28px;
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    transition: opacity 1.2s ease, max-height 1.2s ease, padding 1.2s ease;
+    pointer-events: none;
+}
+
+#lore-panel.visible {
+    opacity: 1;
+    max-height: 300px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+    pointer-events: auto;
+}
+
+#lore-title {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gold-dark);
+    margin-bottom: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+#lore-text {
+    font-size: 0.95rem;
+    color: var(--gold-dark);
+    font-style: italic;
+    line-height: 1.8;
+}
+
+/* ============================================================
+   CLICK BUTTON
+   ============================================================ */
+
 #click-btn {
     background: linear-gradient(145deg, #1a0f00, #2d1a00);
-    color: #e8c87a;
-    border: 1px solid #5a3e1b;
+    color: var(--gold);
+    border: 1px solid var(--gold-deep);
     font-family: 'Crimson Text', serif;
     font-size: 1.2rem;
-    padding: 16px 40px;
+    padding: 18px 48px;
     cursor: pointer;
     letter-spacing: 2px;
     transition: all 0.2s ease;
@@ -107,6 +474,8 @@ body {
         inset 0 0 10px rgba(0,0,0,0.5);
     position: relative;
     overflow: hidden;
+    width: 100%;
+    max-width: 380px;
 }
 
 #click-btn:hover {
@@ -130,160 +499,175 @@ body {
     transition: box-shadow 0.05s ease;
 }
 
-#per-second {
-    font-size: 1rem;
-    color: #6b5030;
-    letter-spacing: 1px;
-    font-style: italic;
+/* ============================================================
+   HOW TO PLAY
+   ============================================================ */
+
+#how-to-play {
+    width: 100%;
+    text-align: center;
 }
+
+#htp-toggle {
+    background: transparent;
+    color: var(--gold-deepest);
+    border: none;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: color 0.2s ease;
+    margin-bottom: 8px;
+}
+
+#htp-toggle:hover {
+    color: var(--gold-darker);
+}
+
+#htp-content {
+    border: 1px solid #1a0a00;
+    background: linear-gradient(145deg, var(--bg-card), var(--bg-warm));
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+#htp-content p {
+    font-size: 0.9rem;
+    color: #5a3e1b;
+    font-style: italic;
+    line-height: 1.7;
+}
+
+#htp-content em {
+    color: var(--gold-dim);
+    font-style: normal;
+}
+
+/* ============================================================
+   UPGRADE CARDS (inside left panel)
+   ============================================================ */
 
 #upgrade-container {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    margin-top: 10px;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .upgrade-btn {
     background: linear-gradient(145deg, #100800, #1e1000);
-    color: #8a6a3a;
-    border: 1px solid #3a2a10;
+    color: #5a3e1b;
+    border: 1px solid #2a1a08;
     font-family: 'Crimson Text', serif;
-    font-size: 0.95rem;
-    padding: 14px 18px;
+    font-size: 0.9rem;
+    padding: 12px 14px;
     cursor: pointer;
-    width: 200px;
-    text-align: center;
+    width: 100%;
+    text-align: left;
     line-height: 1.6;
     transition: all 0.2s ease;
-    opacity: 0.6;
+    opacity: 0.55;
 }
 
 .upgrade-btn.affordable {
     opacity: 1;
-    border-color: #5a3e1b;
-    color: #c9a96e;
-    box-shadow: 0 0 10px rgba(200, 150, 50, 0.1);
+    border-color: var(--gold-deep);
+    color: var(--gold-dim);
+    box-shadow: 0 0 8px rgba(200, 150, 50, 0.08);
 }
 
 .upgrade-btn.affordable:hover {
     background: linear-gradient(145deg, #1e1000, #2d1a00);
-    box-shadow: 0 0 20px rgba(200, 150, 50, 0.2);
-    color: #e8c87a;
-    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(200, 150, 50, 0.18);
+    color: var(--gold);
+    transform: translateX(2px);
 }
 
 .upgrade-btn.nameless {
-    border-color: #2a3a4a;
-    background: linear-gradient(145deg, #080e14, #0f1a24);
+    border-color: #1a2a3a;
+    background: linear-gradient(145deg, var(--pale-bg), #0a1520);
 }
 
 .upgrade-btn.nameless.affordable {
-    border-color: #3a5a7a;
-    color: #a0c0d0;
-    box-shadow: 0 0 10px rgba(100, 150, 200, 0.1);
+    border-color: var(--pale-border);
+    color: var(--pale-blue);
+    box-shadow: 0 0 8px rgba(100, 150, 200, 0.08);
 }
 
 .upgrade-btn.nameless.affordable:hover {
-    box-shadow: 0 0 20px rgba(100, 150, 200, 0.2);
+    box-shadow: 0 0 16px rgba(100, 150, 200, 0.18);
     color: #c0dce8;
 }
 
 .upgrade-btn strong {
     display: block;
-    font-size: 1.05rem;
-    color: #e8c87a;
-    margin-bottom: 4px;
+    font-size: 1rem;
+    color: var(--gold);
+    margin-bottom: 2px;
 }
 
 .upgrade-btn.nameless strong {
-    color: #a0c0d0;
+    color: var(--pale-blue);
 }
 
 .upgrade-btn small {
     display: block;
     font-style: italic;
-    color: #6b5030;
-    margin-bottom: 6px;
-    font-size: 0.85rem;
+    color: var(--gold-deepest);
+    margin-bottom: 4px;
+    font-size: 0.82rem;
 }
 
-#lore-panel {
-    width: 100%;
-    max-width: 600px;
-    border: 1px solid #3a2a10;
-    background: linear-gradient(145deg, #0d0800, #150f00);
-    padding: 20px 28px;
-    margin-top: 10px;
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: hidden;
-    transition: opacity 1.2s ease, max-height 1.2s ease, padding 1.2s ease;
-    pointer-events: none;
-}
+/* ============================================================
+   RIGHT PANEL SECTIONS
+   ============================================================ */
 
-#lore-panel.visible {
-    opacity: 1;
-    max-height: 400px;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    pointer-events: auto;
-}
-
-#lore-title {
-    font-family: 'Crimson Text', serif;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #a08050;
-    margin-bottom: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-
-#lore-text {
-    font-size: 1rem;
-    color: #a08050;
-    font-style: italic;
-    line-height: 1.8;
-}
-
-#prestige-container {
-    width: 100%;
-    max-width: 600px;
-    text-align: center;
-    margin-top: 10px;
+.panel-section {
+    border-bottom: 1px solid #1a0a00;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
-#prestige-info {
-    font-size: 0.95rem;
-    color: #6b5030;
+.panel-section:last-child {
+    border-bottom: none;
+}
+
+#prestige-info-panel {
+    font-size: 0.85rem;
+    color: var(--gold-darker);
     letter-spacing: 1px;
     font-style: italic;
+    text-align: center;
 }
 
-#prestige-info span {
-    color: #c9a96e;
+#prestige-info-panel span {
+    color: var(--gold-dim);
     font-style: normal;
     font-weight: 600;
 }
 
 #next-unlock-info {
-    font-size: 0.85rem;
-    color: #5a3e1b;
+    font-size: 0.8rem;
+    color: var(--gold-deepest);
     font-style: italic;
     letter-spacing: 1px;
+    text-align: center;
+}
+
+#ritual-hint-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
 }
 
 #ritual-hint {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     color: #8a3a3a;
     font-style: italic;
     letter-spacing: 2px;
@@ -291,70 +675,63 @@ body {
 }
 
 #pale-librarian-hint {
-    font-size: 0.9rem;
-    color: #6a8a9a;
+    font-size: 0.82rem;
+    color: #4a7a8a;
     font-style: italic;
     letter-spacing: 2px;
     animation: pulse 3s infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-}
-
 #action-buttons {
     display: flex;
-    gap: 12px;
-    align-items: center;
+    gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
 }
 
 #save-btn {
     background: transparent;
-    color: #6b5030;
-    border: 1px solid #3a2a10;
+    color: var(--gold-darker);
+    border: 1px solid var(--border);
     font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    padding: 8px 20px;
+    font-size: 0.85rem;
+    padding: 6px 14px;
     cursor: pointer;
     letter-spacing: 1px;
     transition: all 0.2s ease;
 }
 
 #save-btn:hover {
-    color: #c9a96e;
-    border-color: #5a3e1b;
+    color: var(--gold-dim);
+    border-color: var(--gold-deep);
 }
 
 #kofi-btn {
     background: transparent;
-    color: #6b5030;
-    border: 1px solid #3a2a10;
+    color: var(--gold-darker);
+    border: 1px solid var(--border);
     font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    padding: 8px 20px;
+    font-size: 0.85rem;
+    padding: 6px 14px;
     cursor: pointer;
     letter-spacing: 1px;
     transition: all 0.2s ease;
-    display: inline-block;
 }
 
 #kofi-btn:hover {
-    color: #c9a96e;
-    border-color: #5a3e1b;
+    color: var(--gold-dim);
+    border-color: var(--gold-deep);
 }
 
 #save-indicator {
-    font-size: 0.85rem;
-    color: #6b5030;
+    font-size: 0.8rem;
+    color: var(--gold-darker);
     letter-spacing: 2px;
     font-style: italic;
     opacity: 0;
     transition: opacity 0.5s ease;
-    margin-top: 4px;
-    min-height: 1.2em;
+    text-align: center;
+    min-height: 1.1em;
     cursor: default;
 }
 
@@ -362,189 +739,129 @@ body {
     opacity: 1;
 }
 
+/* Right panel action buttons */
 #prestige-btn {
     background: linear-gradient(145deg, #1a0000, #2d0a00);
-    color: #e87a7a;
+    color: var(--red);
     border: 1px solid #5a1b1b;
     font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
-    padding: 14px 32px;
+    font-size: 0.95rem;
+    padding: 10px 20px;
     cursor: pointer;
     letter-spacing: 2px;
     transition: all 0.2s ease;
-    box-shadow: 0 0 15px rgba(200, 50, 50, 0.1);
+    box-shadow: 0 0 12px rgba(200, 50, 50, 0.1);
+    width: 100%;
 }
 
 #prestige-btn:hover {
-    background: linear-gradient(145deg, #2d0a00, #4a1000);
-    box-shadow: 0 0 25px rgba(200, 50, 50, 0.3);
+    box-shadow: 0 0 20px rgba(200, 50, 50, 0.3);
     color: #ffaaaa;
     transform: translateY(-1px);
 }
 
-#prestige-btn:active {
-    transform: translateY(1px);
-}
-
 #ritual-btn {
     background: linear-gradient(145deg, #0a001a, #1a0030);
-    color: #c87ae8;
-    border: 1px solid #5a1b8a;
+    color: var(--purple);
+    border: 1px solid var(--purple-border);
     font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
-    padding: 14px 32px;
+    font-size: 0.95rem;
+    padding: 10px 20px;
     cursor: pointer;
     letter-spacing: 2px;
     transition: all 0.2s ease;
-    box-shadow: 0 0 15px rgba(150, 50, 200, 0.1);
+    box-shadow: 0 0 12px rgba(150, 50, 200, 0.1);
+    width: 100%;
 }
 
 #ritual-btn:hover {
-    background: linear-gradient(145deg, #1a0030, #2d0050);
-    box-shadow: 0 0 25px rgba(150, 50, 200, 0.3);
+    box-shadow: 0 0 20px rgba(150, 50, 200, 0.3);
     color: #e8aaff;
     transform: translateY(-1px);
 }
 
-#ritual-btn:active {
-    transform: translateY(1px);
-}
-
 #pale-librarian-btn {
-    background: linear-gradient(145deg, #080e14, #0f1a24);
-    color: #8ab0c0;
-    border: 1px solid #2a4a5a;
+    background: linear-gradient(145deg, var(--pale-bg), #0f1a24);
+    color: #6ab0c0;
+    border: 1px solid var(--pale-border);
     font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
-    padding: 14px 32px;
+    font-size: 0.95rem;
+    padding: 10px 20px;
     cursor: pointer;
     letter-spacing: 2px;
     transition: all 0.2s ease;
-    box-shadow: 0 0 15px rgba(100, 150, 200, 0.1);
+    box-shadow: 0 0 12px rgba(100, 150, 200, 0.1);
+    width: 100%;
 }
 
 #pale-librarian-btn:hover {
-    background: linear-gradient(145deg, #0f1a24, #1a2a3a);
-    box-shadow: 0 0 25px rgba(100, 150, 200, 0.25);
-    color: #c0dce8;
+    box-shadow: 0 0 20px rgba(100, 150, 200, 0.25);
+    color: #b0d8e8;
     transform: translateY(-1px);
-}
-
-#pale-librarian-btn:active {
-    transform: translateY(1px);
 }
 
 #reset-btn {
     background: transparent;
-    color: #3a1a1a;
+    color: #2a1010;
     border: none;
     font-family: 'Crimson Text', serif;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     cursor: pointer;
     letter-spacing: 1px;
     transition: color 0.2s ease;
-    margin-top: 4px;
     text-decoration: underline;
     text-underline-offset: 3px;
+    align-self: center;
 }
 
 #reset-btn:hover {
-    color: #e87a7a;
+    color: var(--red);
 }
 
-#how-to-play {
-    width: 100%;
-    max-width: 600px;
-    text-align: center;
-}
-
-#htp-toggle {
+/* Panel section toggles */
+.panel-section-toggle {
     background: transparent;
-    color: #6b5030;
-    border: none;
+    color: var(--gold-deepest);
+    border: 1px solid #1a0a00;
     font-family: 'Crimson Text', serif;
-    font-size: 0.95rem;
+    font-size: 0.8rem;
+    padding: 5px 12px;
     cursor: pointer;
     letter-spacing: 1px;
-    transition: color 0.2s ease;
-    margin-bottom: 10px;
-}
-
-#htp-toggle:hover {
-    color: #c9a96e;
-}
-
-#htp-content {
-    border: 1px solid #2a1a08;
-    background: linear-gradient(145deg, #0d0800, #150f00);
-    padding: 18px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-#htp-content p {
-    font-size: 0.95rem;
-    color: #8a6a3a;
-    font-style: italic;
-    line-height: 1.7;
-}
-
-#htp-content em {
-    color: #c9a96e;
-    font-style: normal;
-}
-
-.htp-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    margin-top: 4px;
-}
-
-.htp-section-toggle {
-    background: transparent;
-    color: #4a3020;
-    border: 1px solid #2a1a08;
-    font-family: 'Crimson Text', serif;
-    font-size: 0.85rem;
-    padding: 6px 16px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: color 0.2s ease, border-color 0.2s ease;
+    transition: all 0.2s ease;
     width: 100%;
     text-align: center;
 }
 
-.htp-section-toggle:hover {
-    color: #8a6a3a;
-    border-color: #3a2a10;
+.panel-section-toggle:hover {
+    color: var(--gold-darker);
+    border-color: var(--border);
 }
 
-.htp-section-content {
+.panel-section-content {
     display: none;
-    width: 100%;
-    margin-top: 8px;
 }
 
+/* Stats rows */
 .stats-row {
     display: flex;
     justify-content: space-between;
-    font-size: 0.85rem;
-    color: #6b5030;
-    padding: 4px 0;
-    border-bottom: 1px solid #1a0a00;
+    font-size: 0.8rem;
+    color: var(--gold-darker);
+    padding: 3px 0;
+    border-bottom: 1px solid #0f0600;
     font-style: normal;
     letter-spacing: 0.5px;
+    gap: 8px;
 }
 
 .stats-row span:first-child {
-    color: #5a3e1b;
+    color: var(--gold-deep);
+    flex-shrink: 0;
 }
 
 .stats-row span:last-child {
-    color: #a08050;
+    color: var(--gold-dark);
     text-align: right;
 }
 
@@ -552,109 +869,115 @@ body {
     color: #8a3a3a !important;
 }
 
+/* Lore archive inside panel */
 #lore-archive-panel {
-    max-height: 300px;
+    max-height: 280px;
     overflow-y: auto;
 }
 
 .lore-archive-entry {
-    padding: 10px 0;
-    border-bottom: 1px solid #1a0a00;
+    padding: 8px 0;
+    border-bottom: 1px solid #0f0600;
 }
 
 .lore-archive-title {
     font-family: 'Crimson Text', serif;
-    font-size: 0.75rem;
-    color: #5a3e1b;
+    font-size: 0.7rem;
+    color: var(--gold-deep);
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .lore-archive-text {
     font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    color: #6b5030;
+    font-size: 0.85rem;
+    color: var(--gold-darker);
     font-style: italic;
-    line-height: 1.6;
+    line-height: 1.55;
 }
 
 .lore-archive-empty {
     font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    color: #3a2a10;
+    font-size: 0.85rem;
+    color: var(--gold-deepest);
     font-style: italic;
     text-align: center;
-    padding: 12px 0;
+    padding: 10px 0;
 }
 
+/* Achievements inside panel */
 .achievements-summary {
     font-family: 'Crimson Text', serif;
-    font-size: 0.8rem;
-    color: #5a3e1b;
+    font-size: 0.75rem;
+    color: var(--gold-deep);
     letter-spacing: 1px;
     text-align: center;
-    padding: 4px 0 8px 0;
-    border-bottom: 1px solid #2a1a08;
-    margin-bottom: 8px;
+    padding: 3px 0 6px 0;
+    border-bottom: 1px solid #1a0a00;
+    margin-bottom: 6px;
 }
 
 .achievement-entry {
-    padding: 6px 0;
-    border-bottom: 1px solid #1a0a00;
+    padding: 5px 0;
+    border-bottom: 1px solid #0f0600;
 }
 
 .achievement-entry.unlocked .achievement-entry-name {
     font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    color: #c9a96e;
+    font-size: 0.85rem;
+    color: var(--gold-dim);
     letter-spacing: 1px;
 }
 
 .achievement-entry-hint {
     font-family: 'Crimson Text', serif;
-    font-size: 0.75rem;
-    color: #3a2a10;
+    font-size: 0.7rem;
+    color: var(--gold-deepest);
     letter-spacing: 0.5px;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     font-style: normal;
 }
 
 .achievement-entry.unlocked .achievement-entry-flavour {
     font-family: 'Crimson Text', serif;
-    font-size: 0.8rem;
-    color: #6b5030;
+    font-size: 0.75rem;
+    color: var(--gold-darker);
     font-style: italic;
 }
 
 .achievement-entry.locked .achievement-entry-name {
     font-family: 'Crimson Text', serif;
-    font-size: 0.9rem;
-    color: #2a1a08;
+    font-size: 0.85rem;
+    color: #1a0a00;
     letter-spacing: 1px;
 }
 
 .achievement-entry.locked .achievement-entry-flavour {
     font-family: 'Crimson Text', serif;
-    font-size: 0.8rem;
-    color: #1a0a00;
+    font-size: 0.75rem;
+    color: #0f0600;
     font-style: italic;
 }
+
+/* ============================================================
+   ACHIEVEMENT NOTIFICATION
+   ============================================================ */
 
 .achievement-notification {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    max-width: 280px;
-    border: 1px solid #5a3e1b;
-    background: linear-gradient(145deg, #0d0800, #1a0f00);
-    padding: 14px 18px;
+    max-width: 260px;
+    border: 1px solid var(--gold-deep);
+    background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
+    padding: 12px 16px;
     opacity: 0;
     transform: translateY(20px);
     transition: opacity 0.5s ease, transform 0.5s ease;
     pointer-events: none;
     z-index: 2000;
-    box-shadow: 0 0 30px rgba(200, 150, 50, 0.15);
+    box-shadow: 0 0 30px rgba(200, 150, 50, 0.12);
 }
 
 .achievement-notification.visible {
@@ -664,37 +987,40 @@ body {
 
 .achievement-notification-label {
     font-family: 'Crimson Text', serif;
-    font-size: 0.7rem;
-    color: #5a3e1b;
+    font-size: 0.65rem;
+    color: var(--gold-deep);
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .achievement-notification-name {
     font-family: 'Crimson Text', serif;
-    font-size: 1rem;
-    color: #e8c87a;
+    font-size: 0.95rem;
+    color: var(--gold);
     letter-spacing: 1px;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .achievement-notification-flavour {
     font-family: 'Crimson Text', serif;
-    font-size: 0.85rem;
-    color: #6b5030;
+    font-size: 0.8rem;
+    color: var(--gold-darker);
     font-style: italic;
 }
 
-/* Pale Librarian — cold blue-white palette */
+/* ============================================================
+   PALE LIBRARIAN
+   ============================================================ */
+
 .pale-box {
-    border-color: #2a4a5a !important;
-    background: linear-gradient(145deg, #080e14, #0f1824) !important;
+    border-color: var(--pale-border) !important;
+    background: linear-gradient(145deg, var(--pale-bg), #0f1824) !important;
     box-shadow: 0 0 60px rgba(100, 150, 200, 0.08) !important;
 }
 
 .pale-title {
-    color: #a0c0d0 !important;
+    color: var(--pale-blue) !important;
     letter-spacing: 5px !important;
 }
 
@@ -704,7 +1030,7 @@ body {
 
 #pale-silence-bar-container {
     width: 100%;
-    height: 6px;
+    height: 5px;
     background: #0a0f14;
     border: 1px solid #1a2a3a;
     overflow: hidden;
@@ -713,18 +1039,18 @@ body {
 #pale-silence-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #1a3a5a, #a0c0d0);
+    background: linear-gradient(90deg, #1a3a5a, var(--pale-blue));
     transition: width 1s linear;
 }
 
 #pale-timer {
-    font-size: 2rem;
-    color: #a0c0d0;
+    font-size: 2.5rem;
+    color: var(--pale-blue);
     font-style: normal;
     display: block;
     text-align: center;
-    margin-top: 12px;
-    letter-spacing: 4px;
+    margin-top: 16px;
+    letter-spacing: 6px;
 }
 
 #pale-reward-buttons-container {
@@ -735,9 +1061,9 @@ body {
 }
 
 .pale-reward-btn {
-    background: linear-gradient(145deg, #080e14, #0f1824) !important;
-    border-color: #2a4a5a !important;
-    color: #8ab0c0 !important;
+    background: linear-gradient(145deg, var(--pale-bg), #0f1824) !important;
+    border-color: var(--pale-border) !important;
+    color: #7ab0c0 !important;
 }
 
 .pale-reward-btn:hover {
@@ -747,10 +1073,13 @@ body {
 }
 
 .pale-reward-btn strong {
-    color: #a0c0d0 !important;
+    color: var(--pale-blue) !important;
 }
 
-/* Overlay screens */
+/* ============================================================
+   OVERLAYS
+   ============================================================ */
+
 .overlay-screen {
     position: fixed;
     top: 0;
@@ -761,7 +1090,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 500;
     opacity: 0;
     transition: opacity 0.6s ease;
     pointer-events: none;
@@ -775,11 +1104,11 @@ body {
 }
 
 .overlay-box {
-    max-width: 580px;
+    max-width: 560px;
     width: 100%;
-    border: 1px solid #5a3e1b;
-    background: linear-gradient(145deg, #0d0800, #1a0f00);
-    padding: 36px 40px;
+    border: 1px solid var(--gold-deep);
+    background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
+    padding: 32px 36px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -788,9 +1117,9 @@ body {
 
 .overlay-title {
     font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: #e8c87a;
+    color: var(--gold);
     letter-spacing: 4px;
     text-align: center;
     text-transform: uppercase;
@@ -798,15 +1127,15 @@ body {
 
 .overlay-text {
     font-family: 'Crimson Text', serif;
-    font-size: 1.05rem;
-    color: #a08050;
+    font-size: 1rem;
+    color: var(--gold-dark);
     line-height: 1.9;
     font-style: italic;
     text-align: center;
 }
 
 .overlay-text em {
-    color: #e8c87a;
+    color: var(--gold);
     font-style: normal;
 }
 
@@ -820,11 +1149,11 @@ body {
 .overlay-buttons button,
 .overlay-buttons a {
     background: transparent;
-    color: #6b5030;
-    border: 1px solid #3a2a10;
+    color: var(--gold-darker);
+    border: 1px solid var(--border);
     font-family: 'Crimson Text', serif;
-    font-size: 1rem;
-    padding: 10px 24px;
+    font-size: 0.95rem;
+    padding: 10px 22px;
     cursor: pointer;
     letter-spacing: 1px;
     transition: all 0.2s ease;
@@ -834,14 +1163,14 @@ body {
 
 .overlay-buttons button:hover,
 .overlay-buttons a:hover {
-    color: #c9a96e;
-    border-color: #5a3e1b;
+    color: var(--gold-dim);
+    border-color: var(--gold-deep);
 }
 
 #ritual-confirm-btn {
     background: linear-gradient(145deg, #0a001a, #1a0030) !important;
-    color: #c87ae8 !important;
-    border-color: #5a1b8a !important;
+    color: var(--purple) !important;
+    border-color: var(--purple-border) !important;
 }
 
 #ritual-confirm-btn:hover {
@@ -850,9 +1179,9 @@ body {
 }
 
 #pale-librarian-ready-btn {
-    background: linear-gradient(145deg, #080e14, #0f1824) !important;
+    background: linear-gradient(145deg, var(--pale-bg), #0f1824) !important;
     color: #8ab0c0 !important;
-    border-color: #2a4a5a !important;
+    border-color: var(--pale-border) !important;
 }
 
 #pale-librarian-ready-btn:hover {
@@ -862,34 +1191,34 @@ body {
 
 #banishment-progress-bar-container {
     width: 100%;
-    height: 12px;
+    height: 10px;
     background: #1a0a00;
-    border: 1px solid #3a2a10;
+    border: 1px solid var(--border);
     overflow: hidden;
 }
 
 #banishment-progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #5a1b8a, #c87ae8);
+    background: linear-gradient(90deg, var(--purple-border), var(--purple));
     transition: width 0.1s ease;
 }
 
 #banishment-clicks-text {
     font-family: 'Crimson Text', serif;
     font-size: 0.9rem;
-    color: #6b5030;
+    color: var(--gold-darker);
     text-align: center;
     letter-spacing: 1px;
 }
 
 #banishment-click-btn {
     background: linear-gradient(145deg, #0a001a, #1a0030);
-    color: #c87ae8;
-    border: 1px solid #5a1b8a;
+    color: var(--purple);
+    border: 1px solid var(--purple-border);
     font-family: 'Crimson Text', serif;
-    font-size: 1.3rem;
-    padding: 18px 40px;
+    font-size: 1.2rem;
+    padding: 16px 36px;
     cursor: pointer;
     letter-spacing: 2px;
     transition: all 0.1s ease;
@@ -898,7 +1227,6 @@ body {
 }
 
 #banishment-click-btn:hover {
-    background: linear-gradient(145deg, #1a0030, #2d0050);
     box-shadow: 0 0 35px rgba(150, 50, 200, 0.4);
     color: #e8aaff;
     transform: scale(1.02);
@@ -917,8 +1245,8 @@ body {
 
 .reward-btn {
     background: linear-gradient(145deg, #100800, #1e1000);
-    color: #c9a96e;
-    border: 1px solid #5a3e1b;
+    color: var(--gold-dim);
+    border: 1px solid var(--gold-deep);
     font-family: 'Crimson Text', serif;
     font-size: 0.95rem;
     padding: 14px 18px;
@@ -932,56 +1260,61 @@ body {
 .reward-btn:hover {
     background: linear-gradient(145deg, #1e1000, #2d1a00);
     box-shadow: 0 0 20px rgba(200, 150, 50, 0.2);
-    color: #e8c87a;
+    color: var(--gold);
     transform: translateY(-1px);
 }
 
 .reward-btn strong {
     display: block;
-    color: #e8c87a;
-    font-size: 1.05rem;
+    color: var(--gold);
+    font-size: 1rem;
     margin-bottom: 4px;
 }
 
 .reward-btn small {
     display: block;
     font-style: italic;
-    color: #6b5030;
+    color: var(--gold-darker);
     font-size: 0.85rem;
 }
 
+/* True ending */
 .ending-screen {
-    background: rgba(0, 0, 0, 0.97) !important;
+    background: rgba(0, 0, 0, 0.98) !important;
 }
 
 .ending-box {
-    border-color: #3a2a10 !important;
-    box-shadow: 0 0 100px rgba(200, 150, 50, 0.05) !important;
-    max-width: 640px !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 0 100px rgba(200, 150, 50, 0.04) !important;
+    max-width: 600px !important;
 }
 
 .ending-title {
-    font-size: 1rem !important;
-    color: #a08050 !important;
+    font-size: 0.9rem !important;
+    color: var(--gold-dark) !important;
     letter-spacing: 6px !important;
 }
 
 .ending-text {
-    font-size: 1.1rem !important;
-    color: #8a6a3a !important;
+    font-size: 1.05rem !important;
+    color: var(--gold-deeper, #6b5030) !important;
     line-height: 2.1 !important;
 }
 
 .ending-text em {
-    color: #e8c87a !important;
-    font-size: 1.2rem !important;
+    color: var(--gold) !important;
+    font-size: 1.15rem !important;
 }
+
+/* ============================================================
+   CLICK ANIMATION
+   ============================================================ */
 
 .float-number {
     position: fixed;
     font-family: 'Crimson Text', serif;
     font-size: 1.1rem;
-    color: #e8c87a;
+    color: var(--gold);
     pointer-events: none;
     z-index: 999;
     animation: floatUp 1s ease-out forwards;
@@ -989,12 +1322,79 @@ body {
 }
 
 @keyframes floatUp {
-    0% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* ============================================================
+   RESPONSIVE — MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    .mobile-tab {
+        display: block;
     }
-    100% {
-        opacity: 0;
-        transform: translateY(-60px) scale(0.8);
+
+    #panel-toggles {
+        display: none;
+    }
+
+    .side-panel {
+        width: 85vw;
+        max-width: 320px;
+    }
+
+    #left-panel {
+        transform: translateX(-100%);
+    }
+
+    #right-panel {
+        transform: translateX(100%);
+    }
+
+    #game-container {
+        padding: 32px 16px 100px 16px;
+    }
+
+    #game-title {
+        font-size: clamp(1.6rem, 8vw, 2.4rem);
+    }
+
+    #click-btn {
+        padding: 16px 32px;
+        font-size: 1.05rem;
+    }
+
+    .achievement-notification {
+        bottom: 70px;
+        right: 12px;
+        max-width: 220px;
+    }
+}
+
+@media (min-width: 769px) {
+    /* On desktop, panels open beside the center, not over it */
+    body.left-open #game-container {
+        margin-left: var(--panel-width);
+        transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body.right-open #game-container {
+        margin-right: var(--panel-width);
+        transition: margin-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #game-container {
+        transition: margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 }
