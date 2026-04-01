@@ -18,36 +18,109 @@
      crossorigin="anonymous"></script>
   </head>
   <body>
-    <div id="game-container">
-      <h1 id="game-title">The Archivist</h1>
-      <p id="knowledge-display">Knowledge: <span id="knowledge-count">0</span></p>
 
+    <!-- LEFT PANEL: Scholars -->
+    <div id="left-panel" class="side-panel">
+      <div class="panel-header">
+        <span class="panel-header-title">The Scholars</span>
+        <button class="panel-close-btn" id="left-panel-close">✕</button>
+      </div>
+      <div class="panel-body" id="upgrade-container"></div>
+    </div>
+
+    <!-- RIGHT PANEL: Archive tools -->
+    <div id="right-panel" class="side-panel">
+      <div class="panel-header">
+        <span class="panel-header-title">The Archive</span>
+        <button class="panel-close-btn" id="right-panel-close">✕</button>
+      </div>
+      <div class="panel-body">
+
+        <div class="panel-section">
+          <div id="prestige-info-panel">
+            Descent: <span id="descent-level">0</span> &nbsp;|&nbsp; Multiplier: <span id="knowledge-multiplier">1.0x</span>
+          </div>
+          <div id="next-unlock-info"></div>
+        </div>
+
+        <div class="panel-section" id="action-strip-panel">
+          <div id="ritual-hint-container"></div>
+          <div id="action-buttons">
+            <button id="save-btn">✦ Save</button>
+            <button id="kofi-btn">Support</button>
+          </div>
+          <div id="save-indicator"></div>
+          <button id="prestige-btn" style="display:none;">Descend Deeper</button>
+          <button id="ritual-btn" style="display:none;">Perform the Ritual</button>
+          <button id="pale-librarian-btn" style="display:none;">The Pale Librarian Waits</button>
+          <button id="reset-btn">Reset all progress</button>
+        </div>
+
+        <div class="panel-section">
+          <button class="panel-section-toggle" id="stats-btn">Archive Records ▾</button>
+          <div id="stats-panel" class="panel-section-content"></div>
+        </div>
+
+        <div class="panel-section">
+          <button class="panel-section-toggle" id="lore-archive-btn">Recovered Fragments ▾</button>
+          <div id="lore-archive-panel" class="panel-section-content"></div>
+        </div>
+
+        <div class="panel-section">
+          <button class="panel-section-toggle" id="achievements-btn">Achievements ▾</button>
+          <div id="achievements-panel" class="panel-section-content"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CENTER: Main game -->
+    <div id="game-container">
+
+      <!-- Mobile panel tabs -->
+      <button class="mobile-tab mobile-tab-left" id="mobile-left-tab">Scholars</button>
+      <button class="mobile-tab mobile-tab-right" id="mobile-right-tab">Archive</button>
+
+      <h1 id="game-title">The Archivist</h1>
+
+      <p id="knowledge-display">Knowledge: <span id="knowledge-count">0</span></p>
+      <p id="per-second">The archive whispers <span id="fps">0</span> fragments per second</p>
+
+      <!-- Floating action strip: Descend / Ritual / Pale Librarian — always in view -->
+      <div id="floating-actions"></div>
+
+      <!-- Lore panel -->
+      <div id="lore-panel">
+        <div id="lore-title"></div>
+        <div id="lore-text"></div>
+      </div>
+
+      <!-- Main click button -->
+      <button id="click-btn">Recover a Fragment</button>
+
+      <!-- Desktop panel toggle buttons -->
+      <div id="panel-toggles">
+        <button class="panel-toggle-btn" id="toggle-left-panel">☰ Scholars</button>
+        <button class="panel-toggle-btn" id="toggle-right-panel">Archive ☰</button>
+      </div>
+
+      <!-- How to Play -->
       <div id="how-to-play">
         <button id="htp-toggle">How to Play ▾</button>
         <div id="htp-content">
           <p>Click <em>Recover a Fragment</em> to gather knowledge from the forbidden archive.</p>
-          <p>Spend knowledge on <em>scholars and scribes</em> to generate fragments passively.</p>
+          <p>Open <em>The Scholars</em> panel on the left to summon scribes and scholars who generate fragments passively.</p>
           <p>Reach milestones to uncover <em>lost writings</em> from the depths of the archive.</p>
-          <p>When you have enough knowledge, <em>Descend Deeper</em> to prestige — resetting your run but gaining a permanent bonus multiplier.</p>
+          <p>When you have enough knowledge, <em>Descend Deeper</em> — resetting your run but gaining a permanent bonus multiplier.</p>
           <p>The archive hungers. How far will you descend?</p>
-          <div class="htp-section">
-            <button class="htp-section-toggle" id="stats-btn">View Archive Records ▾</button>
-            <div id="stats-panel" class="htp-section-content"></div>
-          </div>
-          <div class="htp-section">
-            <button class="htp-section-toggle" id="lore-archive-btn">View Recovered Fragments ▾</button>
-            <div id="lore-archive-panel" class="htp-section-content"></div>
-          </div>
-          <div class="htp-section">
-            <button class="htp-section-toggle" id="achievements-btn">View Achievements ▾</button>
-            <div id="achievements-panel" class="htp-section-content"></div>
-          </div>
         </div>
       </div>
 
-      <button id="click-btn">Recover a Fragment</button>
-      <p id="per-second">The archive whispers <span id="fps">0</span> fragments per second</p>
     </div>
+
+    <!-- Mobile backdrop -->
+    <div id="panel-backdrop"></div>
+
     <script src="js/game.js"></script>
   </body>
 </html>
