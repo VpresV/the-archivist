@@ -14,7 +14,8 @@ const state = {
         echoBinder: 0,
         veilSurgeon: 0,
         dreamingLibrarian: 0,
-        hollowArchivist: 0
+        hollowArchivist: 0,
+        namelessOne: 0
     },
     prestige: {
         count: 0,
@@ -26,12 +27,20 @@ const state = {
         mark: false,
         gift: false
     },
+    paleLibrarianRewards: {
+        paleGift: false,
+        stillArchive: false,
+        whitePage: false
+    },
     ritualAvailable: false,
     ritualAttempted: false,
     banishmentReached: false,
+    paleLibrarianAvailable: false,
+    paleLibrarianDefeated: false,
     endingSeen: false,
     ngPlus: false,
     baselineKps: 0,
+    upgradeCostModifier: 1.0,
     loreLog: [],
     totalClicks: 0,
     totalDailyBonuses: 0,
@@ -41,6 +50,7 @@ const state = {
         totalFragmentsEver: 0,
         totalDescents: 0,
         hollowKingDefeats: 0,
+        paleLibrarianDefeats: 0,
         sessionStart: Date.now()
     }
 };
@@ -107,18 +117,22 @@ const achievementDefs = [
     // Time
     { id: "time_1h", name: "The Patient One", hint: "Have the game open for 1 hour total.", condition: () => state.totalTimeOpen >= 3600, flavour: "The archive rewards those who stay." },
     { id: "time_24h", name: "What Are You", hint: "Have the game open for 24 hours total.", condition: () => state.totalTimeOpen >= 86400, flavour: "The line between you and the archive is very thin now." },
+    // Pale Librarian
+    { id: "the_stillness", name: "The Stillness", hint: "Defeat the Pale Librarian.", condition: () => state.stats.paleLibrarianDefeats >= 1, flavour: "You held. The archive noticed." },
+    { id: "what_it_showed_you", name: "What It Showed You", hint: "Claim a Pale Librarian reward.", condition: () => state.paleLibrarianRewards.paleGift || state.paleLibrarianRewards.stillArchive || state.paleLibrarianRewards.whitePage, flavour: "Some pages cannot be unread." },
 ];
 
 // --- UPGRADE DEFINITIONS ---
 const upgradeDefs = [
-    { id: "quillScribe", name: "Quill Scribe", description: "A scribe who copies fragments endlessly.", baseCost: 10, kps: 0.1, requiredDescent: 0 },
-    { id: "dustReader", name: "Dust Reader", description: "Reads meaning from ashes and forgotten dust.", baseCost: 75, kps: 0.5, requiredDescent: 0 },
-    { id: "shadowScholar", name: "Shadow Scholar", description: "A scholar who works in the dark between worlds.", baseCost: 500, kps: 3, requiredDescent: 0 },
-    { id: "boneCartographer", name: "Bone Cartographer", description: "Maps the archive's forbidden wings in brittle script.", baseCost: 3000, kps: 10, requiredDescent: 1 },
-    { id: "echoBinder", name: "Echo Binder", description: "Binds whispers into solid text before they fade.", baseCost: 15000, kps: 40, requiredDescent: 2 },
-    { id: "veilSurgeon", name: "Veil Surgeon", description: "Cuts through reality to retrieve pages lost between worlds.", baseCost: 100000, kps: 150, requiredDescent: 3 },
-    { id: "dreamingLibrarian", name: "Dreaming Librarian", description: "Reads while the archive sleeps, stealing knowledge from its dreams.", baseCost: 750000, kps: 500, requiredDescent: 4 },
-    { id: "hollowArchivist", name: "The Hollow Archivist", description: "Has become part of the archive itself. It no longer remembers its name.", baseCost: 5000000, kps: 1500, requiredDescent: 5 }
+    { id: "quillScribe", name: "Quill Scribe", description: "A scribe who copies fragments endlessly.", baseCost: 10, kps: 0.1, requiredDescent: 0, paleLibrarianOnly: false },
+    { id: "dustReader", name: "Dust Reader", description: "Reads meaning from ashes and forgotten dust.", baseCost: 75, kps: 0.5, requiredDescent: 0, paleLibrarianOnly: false },
+    { id: "shadowScholar", name: "Shadow Scholar", description: "A scholar who works in the dark between worlds.", baseCost: 500, kps: 3, requiredDescent: 0, paleLibrarianOnly: false },
+    { id: "boneCartographer", name: "Bone Cartographer", description: "Maps the archive's forbidden wings in brittle script.", baseCost: 3000, kps: 10, requiredDescent: 1, paleLibrarianOnly: false },
+    { id: "echoBinder", name: "Echo Binder", description: "Binds whispers into solid text before they fade.", baseCost: 15000, kps: 40, requiredDescent: 2, paleLibrarianOnly: false },
+    { id: "veilSurgeon", name: "Veil Surgeon", description: "Cuts through reality to retrieve pages lost between worlds.", baseCost: 100000, kps: 150, requiredDescent: 3, paleLibrarianOnly: false },
+    { id: "dreamingLibrarian", name: "Dreaming Librarian", description: "Reads while the archive sleeps, stealing knowledge from its dreams.", baseCost: 750000, kps: 500, requiredDescent: 4, paleLibrarianOnly: false },
+    { id: "hollowArchivist", name: "The Hollow Archivist", description: "Has become part of the archive itself. It no longer remembers its name.", baseCost: 5000000, kps: 1500, requiredDescent: 5, paleLibrarianOnly: false },
+    { id: "namelessOne", name: "The Nameless One", description: "It arrived after the silence. It does not speak. It does not stop.", baseCost: 50000000, kps: 5000, requiredDescent: 0, paleLibrarianOnly: true }
 ];
 
 // --- DOM REFERENCES ---
@@ -132,73 +146,6 @@ function formatNumber(n) {
     if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
     if (n >= 1000) return (n / 1000).toFixed(1) + "K";
     return Math.floor(n).toString();
-}
-
-// --- SOUND SYSTEM ---
-let audioCtx = null;
-let soundEnabled = false;
-
-function getAudioContext() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
-}
-
-function playLoreSound() {
-    if (!soundEnabled) return;
-    try {
-        const ctx = getAudioContext();
-        const bufferSize = ctx.sampleRate * 0.6;
-        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
-        const noiseSource = ctx.createBufferSource();
-        noiseSource.buffer = buffer;
-        const noiseFilter = ctx.createBiquadFilter();
-        noiseFilter.type = "bandpass";
-        noiseFilter.frequency.value = 800;
-        noiseFilter.Q.value = 0.4;
-        const noiseGain = ctx.createGain();
-        noiseGain.gain.setValueAtTime(0.001, ctx.currentTime);
-        noiseGain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.15);
-        noiseGain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.35);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-        noiseSource.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(ctx.destination);
-        const resonator = ctx.createOscillator();
-        const resGain = ctx.createGain();
-        resonator.type = "sine";
-        resonator.frequency.setValueAtTime(65, ctx.currentTime);
-        resonator.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.8);
-        resGain.gain.setValueAtTime(0.001, ctx.currentTime);
-        resGain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.2);
-        resGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-        resonator.connect(resGain);
-        resGain.connect(ctx.destination);
-        noiseSource.start(ctx.currentTime);
-        noiseSource.stop(ctx.currentTime + 0.6);
-        resonator.start(ctx.currentTime);
-        resonator.stop(ctx.currentTime + 0.8);
-    } catch (e) {}
-}
-
-function playPrestigeSound() {
-    if (!soundEnabled) return;
-    try {
-        const ctx = getAudioContext();
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(200, ctx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 1.8);
-        gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.2);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 1.8);
-    } catch (e) {}
 }
 
 // --- ACHIEVEMENT SYSTEM ---
@@ -325,12 +272,16 @@ function updateDisplay() {
 // --- UPGRADE COST CALCULATOR ---
 function getUpgradeCost(def) {
     const owned = state.upgrades[def.id] || 0;
-    const base = state.ngPlus ? Math.floor(def.baseCost * 1.5) : def.baseCost;
+    let base = state.ngPlus ? Math.floor(def.baseCost * 1.5) : def.baseCost;
+    base = Math.floor(base * state.upgradeCostModifier);
     return Math.floor(base * Math.pow(1.15, owned));
 }
 
 // --- UPGRADE AVAILABILITY CHECK ---
 function isUpgradeUnlocked(def) {
+    if (def.paleLibrarianOnly) {
+        return state.paleLibrarianRewards.whitePage;
+    }
     return state.prestige.count >= def.requiredDescent;
 }
 
@@ -368,13 +319,13 @@ function renderUpgrades() {
         document.getElementById("game-container").appendChild(container);
     }
 
-    const unlockedCount = upgradeDefs.filter(isUpgradeUnlocked).length;
+    const unlockedDefs = upgradeDefs.filter(isUpgradeUnlocked);
+    const unlockedCount = unlockedDefs.length;
     const currentCount = container.querySelectorAll(".upgrade-btn").length;
 
     if (!upgradesBuilt || unlockedCount !== currentCount) {
         container.innerHTML = "";
-        upgradeDefs.forEach(def => {
-            if (!isUpgradeUnlocked(def)) return;
+        unlockedDefs.forEach(def => {
             const btn = document.createElement("button");
             btn.className = "upgrade-btn";
             btn.id = `upgrade-${def.id}`;
@@ -391,7 +342,7 @@ function renderUpgrades() {
         const canAfford = state.knowledge >= cost;
         const btn = document.getElementById(`upgrade-${def.id}`);
         if (!btn) return;
-        btn.className = "upgrade-btn" + (canAfford ? " affordable" : "");
+        btn.className = "upgrade-btn" + (canAfford ? " affordable" : "") + (def.paleLibrarianOnly ? " nameless" : "");
         btn.innerHTML = `
             <strong>${def.name}</strong> (owned: ${owned})<br/>
             <small>${def.description}</small><br/>
@@ -437,8 +388,6 @@ function showLore(title, text) {
     document.getElementById("lore-title").textContent = cleanTitle;
     document.getElementById("lore-text").textContent = cleanText;
 
-    playLoreSound();
-
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             panel.classList.add("visible");
@@ -478,7 +427,7 @@ function renderPrestige() {
     const { count, bonus, threshold } = state.prestige;
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
-    const nextUnlock = upgradeDefs.find(d => d.requiredDescent === count + 1);
+    const nextUnlock = upgradeDefs.find(d => !d.paleLibrarianOnly && d.requiredDescent === count + 1);
 
     if (!prestigeBuilt) {
         container.innerHTML = `
@@ -491,11 +440,11 @@ function renderPrestige() {
             <div id="action-buttons">
                 <button id="save-btn">✦ Save Progress</button>
                 <button id="kofi-btn">Support the Archive</button>
-                <button id="sound-btn">Sound: Off</button>
             </div>
             <div id="save-indicator"></div>
             <button id="prestige-btn" style="display:none;">Descend Deeper</button>
             <button id="ritual-btn" style="display:none;">Perform the Ritual</button>
+            <button id="pale-librarian-btn" style="display:none;">The Pale Librarian Waits</button>
             <button id="reset-btn">Reset all progress</button>
         `;
 
@@ -504,7 +453,7 @@ function renderPrestige() {
         document.getElementById("prestige-btn").onclick = doPrestige;
         document.getElementById("kofi-btn").onclick = showSupportOverlay;
         document.getElementById("ritual-btn").onclick = showRitualOverlay;
-        document.getElementById("sound-btn").onclick = toggleSound;
+        document.getElementById("pale-librarian-btn").onclick = showPaleLibrarianWarning;
         prestigeBuilt = true;
     }
 
@@ -520,8 +469,10 @@ function renderPrestige() {
     }
 
     const ritualHintContainer = document.getElementById("ritual-hint-container");
-    ritualHintContainer.innerHTML = state.ritualAvailable
-        ? `<div id="ritual-hint">✦ Something stirs in the depths ✦</div>` : "";
+    let hintHTML = "";
+    if (state.ritualAvailable) hintHTML += `<div id="ritual-hint">✦ Something stirs in the depths ✦</div>`;
+    if (state.paleLibrarianAvailable) hintHTML += `<div id="pale-librarian-hint">✦ A pale light moves between the shelves ✦</div>`;
+    ritualHintContainer.innerHTML = hintHTML;
 
     const prestigeBtn = document.getElementById("prestige-btn");
     prestigeBtn.textContent = `Descend Deeper (next bonus: ${nextBonus}%)`;
@@ -530,13 +481,12 @@ function renderPrestige() {
     const ritualBtn = document.getElementById("ritual-btn");
     ritualBtn.style.display = state.ritualAvailable ? "inline-block" : "none";
 
-    const soundBtn = document.getElementById("sound-btn");
-    if (soundBtn) soundBtn.textContent = soundEnabled ? "Sound: On" : "Sound: Off";
+    const paleBtn = document.getElementById("pale-librarian-btn");
+    paleBtn.style.display = state.paleLibrarianAvailable ? "inline-block" : "none";
 }
 
 // --- PRESTIGE ACTION ---
 function doPrestige() {
-    playPrestigeSound();
     state.prestige.count++;
     state.stats.totalDescents++;
     state.prestige.bonus += 0.5;
@@ -544,21 +494,34 @@ function doPrestige() {
 
     state.knowledge = 0;
     state.knowledgePerClick = state.hollowKingRewards.mark ? (state.ngPlus ? 3 : 2) : 1;
+    if (state.paleLibrarianRewards.paleGift) state.knowledgePerClick += 0;
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
     state.loreLog = [];
 
-    Object.keys(state.upgrades).forEach(key => { state.upgrades[key] = 0; });
+    Object.keys(state.upgrades).forEach(key => {
+        if (key !== "namelessOne" || !state.paleLibrarianRewards.whitePage) {
+            state.upgrades[key] = 0;
+        }
+    });
 
     milestonesReached.clear();
     upgradesBuilt = false;
     state.ritualAvailable = false;
+    state.paleLibrarianAvailable = false;
 
     const ritualUnlockThreshold = state.ngPlus ? 8 : 5;
     if (state.prestige.count > ritualUnlockThreshold) {
-        const allRewardsClaimed = state.hollowKingRewards.codex && state.hollowKingRewards.mark && state.hollowKingRewards.gift;
-        if (!allRewardsClaimed && Math.random() < 0.3) {
+        const allHollowRewardsClaimed = state.hollowKingRewards.codex && state.hollowKingRewards.mark && state.hollowKingRewards.gift;
+        if (!allHollowRewardsClaimed && Math.random() < 0.3) {
             state.ritualAvailable = true;
+        }
+    }
+
+    // Pale Librarian triggers in NG+ after descent 5 if not yet defeated.
+    if (state.ngPlus && state.prestige.count > 5 && !state.paleLibrarianDefeated) {
+        if (Math.random() < 0.3) {
+            state.paleLibrarianAvailable = true;
         }
     }
 
@@ -592,6 +555,270 @@ async function triggerPrestigeLore(descentLevel) {
         showLore(data.title || "Whisper from the Dark", data.lore);
     } catch (err) {
         console.log("Prestige lore generation failed:", err);
+    }
+}
+
+// --- PALE LIBRARIAN — PHASE 1: WARNING ---
+function showPaleLibrarianWarning() {
+    removeOverlay("pale-librarian-warning");
+
+    const overlay = document.createElement("div");
+    overlay.id = "pale-librarian-warning";
+    overlay.className = "overlay-screen";
+    overlay.innerHTML = `
+        <div class="overlay-box pale-box">
+            <div class="overlay-title pale-title">The Pale Librarian</div>
+            <div class="overlay-text">
+                Something has been here longer than the archive itself.<br><br>
+                It does not move the way things should move. It stands between the shelves
+                and watches — not with hunger, like the King, but with a patience that has
+                no beginning and no end.<br><br>
+                It will not fight you. It will not speak. It will simply be present, and
+                you must be present with it — still, silent, reaching for nothing — for
+                twenty seconds.<br><br>
+                <em>Do not click. Do not reach. Do not move.</em><br><br>
+                If you falter, it will take something from you and leave. You will not
+                see it again until the next descent.<br><br>
+                When you are ready, close your eyes. Then open them. Then begin.
+            </div>
+            <div class="overlay-buttons">
+                <button id="pale-librarian-ready-btn">I am ready</button>
+                <button id="pale-librarian-cancel-btn">Step Back</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    fadeIn(overlay);
+
+    document.getElementById("pale-librarian-ready-btn").onclick = () => {
+        removeOverlay("pale-librarian-warning");
+        setTimeout(() => showPaleLibrarianSilence(), 500);
+    };
+
+    document.getElementById("pale-librarian-cancel-btn").onclick = () => {
+        removeOverlay("pale-librarian-warning");
+    };
+}
+
+// --- PALE LIBRARIAN — PHASE 2: SILENCE ---
+function showPaleLibrarianSilence() {
+    removeOverlay("pale-librarian-silence");
+
+    let timeLeft = 20;
+    let concluded = false;
+    let timerInterval = null;
+
+    const overlay = document.createElement("div");
+    overlay.id = "pale-librarian-silence";
+    overlay.className = "overlay-screen pale-silence-screen";
+    overlay.innerHTML = `
+        <div class="overlay-box pale-box">
+            <div class="overlay-title pale-title">Be Still</div>
+            <div class="overlay-text" id="pale-silence-text">
+                It is watching.<br><br>
+                <em id="pale-timer">20</em>
+            </div>
+            <div id="pale-silence-bar-container">
+                <div id="pale-silence-bar"></div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    fadeIn(overlay);
+
+    // Any click anywhere on the document fails the challenge.
+    function onAnyClick() {
+        if (concluded) return;
+        concluded = true;
+        clearInterval(timerInterval);
+        document.removeEventListener("click", onAnyClick);
+        removeOverlay("pale-librarian-silence");
+        setTimeout(() => showPaleLibrarianFailed(), 500);
+    }
+
+    // Delay attaching the click listener slightly so the "I am ready"
+    // button click does not immediately trigger a failure.
+    setTimeout(() => {
+        if (!concluded) document.addEventListener("click", onAnyClick);
+    }, 600);
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        const timerEl = document.getElementById("pale-timer");
+        const bar = document.getElementById("pale-silence-bar");
+        if (timerEl) timerEl.textContent = timeLeft;
+        if (bar) bar.style.width = ((20 - timeLeft) / 20 * 100) + "%";
+
+        if (timeLeft <= 0 && !concluded) {
+            concluded = true;
+            clearInterval(timerInterval);
+            document.removeEventListener("click", onAnyClick);
+            removeOverlay("pale-librarian-silence");
+            setTimeout(() => showPaleLibrarianVictory(), 500);
+        }
+    }, 1000);
+}
+
+// --- PALE LIBRARIAN FAILED ---
+function showPaleLibrarianFailed() {
+    const penalty = Math.floor(state.knowledge * 0.4);
+    state.knowledge = Math.max(0, state.knowledge - penalty);
+    state.paleLibrarianAvailable = false;
+    updateDisplay();
+
+    const overlay = document.createElement("div");
+    overlay.id = "pale-fail-overlay";
+    overlay.className = "overlay-screen";
+    overlay.innerHTML = `
+        <div class="overlay-box pale-box">
+            <div class="overlay-title pale-title">You Reached</div>
+            <div class="overlay-text">
+                It saw you move.<br><br>
+                The Pale Librarian did not react — it simply turned away, taking something
+                with it. Something small. Something you will not notice is gone until much
+                later.<br><br>
+                <em>You lost ${formatNumber(penalty)} knowledge.</em><br><br>
+                It may return after your next descent.
+            </div>
+            <div class="overlay-buttons">
+                <button id="pale-fail-close-btn">Return to the Archive</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    fadeIn(overlay);
+    document.getElementById("pale-fail-close-btn").onclick = () => {
+        removeOverlay("pale-fail-overlay");
+        saveGame();
+    };
+}
+
+// --- PALE LIBRARIAN VICTORY ---
+function showPaleLibrarianVictory() {
+    state.stats.paleLibrarianDefeats++;
+    state.paleLibrarianDefeated = true;
+    state.paleLibrarianAvailable = false;
+    checkAchievements();
+
+    const rewardButtons = [];
+    if (!state.paleLibrarianRewards.paleGift) {
+        rewardButtons.push(`
+            <button class="reward-btn pale-reward-btn" id="pale-reward-gift">
+                <strong>The Pale Gift</strong><br/>
+                <small>Your knowledge multiplier doubles permanently. The archive gives freely to those who can wait.</small>
+            </button>
+        `);
+    }
+    if (!state.paleLibrarianRewards.stillArchive) {
+        rewardButtons.push(`
+            <button class="reward-btn pale-reward-btn" id="pale-reward-archive">
+                <strong>The Still Archive</strong><br/>
+                <small>All upgrade costs are permanently reduced by 20%. The archive opens itself to the patient.</small>
+            </button>
+        `);
+    }
+    if (!state.paleLibrarianRewards.whitePage) {
+        rewardButtons.push(`
+            <button class="reward-btn pale-reward-btn" id="pale-reward-page">
+                <strong>The White Page</strong><br/>
+                <small>A new scholar awakens — The Nameless One. It arrived after the silence. It does not stop.</small>
+            </button>
+        `);
+    }
+
+    const allClaimed = state.paleLibrarianRewards.paleGift &&
+        state.paleLibrarianRewards.stillArchive &&
+        state.paleLibrarianRewards.whitePage;
+
+    const overlay = document.createElement("div");
+    overlay.id = "pale-victory-overlay";
+    overlay.className = "overlay-screen";
+    overlay.innerHTML = `
+        <div class="overlay-box pale-box">
+            <div class="overlay-title pale-title">The Pale Librarian Withdraws</div>
+            <div class="overlay-text">
+                Twenty seconds. You held.<br><br>
+                The Pale Librarian regarded you for a long moment — not with approval,
+                not with warmth, but with something that might have been recognition.
+                Then it turned and walked between the shelves and was gone, leaving
+                behind a single page where it had stood.<br><br>
+                The page is blank. But when you hold it, you understand something
+                you could not have put into words before.<br><br>
+                <em>Take what it left.</em>
+            </div>
+            <div id="pale-reward-buttons-container">
+                ${allClaimed
+                    ? `<div class="overlay-text"><em>You have received everything the Pale Librarian had to offer.</em></div>`
+                    : rewardButtons.join("")}
+            </div>
+            <div class="overlay-buttons">
+                <button id="pale-victory-close-btn">Return to the Archive</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    fadeIn(overlay);
+
+    const giftBtn = document.getElementById("pale-reward-gift");
+    if (giftBtn) giftBtn.onclick = () => claimPaleReward("paleGift");
+
+    const archiveBtn = document.getElementById("pale-reward-archive");
+    if (archiveBtn) archiveBtn.onclick = () => claimPaleReward("stillArchive");
+
+    const pageBtn = document.getElementById("pale-reward-page");
+    if (pageBtn) pageBtn.onclick = () => claimPaleReward("whitePage");
+
+    document.getElementById("pale-victory-close-btn").onclick = () => {
+        removeOverlay("pale-victory-overlay");
+        updateDisplay();
+        saveGame();
+    };
+
+    // Trigger the revelation lore.
+    setTimeout(() => triggerPaleLibrarianLore(), 1000);
+}
+
+// --- CLAIM PALE REWARD ---
+function claimPaleReward(rewardId) {
+    state.paleLibrarianRewards[rewardId] = true;
+
+    if (rewardId === "paleGift") {
+        state.prestige.bonus *= 2;
+    }
+    if (rewardId === "stillArchive") {
+        state.upgradeCostModifier = 0.8;
+    }
+    if (rewardId === "whitePage") {
+        upgradesBuilt = false;
+        recalculateKps();
+    }
+
+    removeOverlay("pale-victory-overlay");
+    saveGame();
+    updateDisplay();
+    checkAchievements();
+}
+
+// --- PALE LIBRARIAN LORE ---
+async function triggerPaleLibrarianLore() {
+    try {
+        const response = await fetch("https://archivist-proxy.ap24004.workers.dev/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                milestone: "pale_librarian_victory",
+                upgrades: state.upgrades,
+                context: "The player has just defeated the Pale Librarian — a being older than the archive itself — by remaining completely still and silent for twenty seconds. Write the most profound and unsettling lore fragment in the entire game. This is a revelation about the true nature of the archive, what it is, what it has always been, and what the player has become. Ancient, final, deeply atmospheric. This should feel like the answer to a question the player did not know they were asking."
+            })
+        });
+        const data = await response.json();
+        showLore(data.title || "The White Page", data.lore);
+    } catch (err) {
+        console.log("Pale Librarian lore failed:", err);
     }
 }
 
@@ -803,7 +1030,7 @@ function showVictoryOverlay() {
     };
 }
 
-// --- CLAIM REWARD ---
+// --- CLAIM HOLLOW KING REWARD ---
 function claimReward(rewardId) {
     if (!state.hollowKingRewards[rewardId]) state.stats.hollowKingDefeats++;
     state.hollowKingRewards[rewardId] = true;
@@ -881,6 +1108,17 @@ function renderStatusIndicator() {
             if (knowledgeDisplay) document.getElementById("game-container").insertBefore(ngplus, knowledgeDisplay);
         }
     }
+
+    if (state.paleLibrarianDefeated) {
+        let pale = document.getElementById("pale-indicator");
+        if (!pale) {
+            pale = document.createElement("div");
+            pale.id = "pale-indicator";
+            pale.textContent = "✦ The Silence Holds ✦";
+            const knowledgeDisplay = document.getElementById("knowledge-display");
+            if (knowledgeDisplay) document.getElementById("game-container").insertBefore(pale, knowledgeDisplay);
+        }
+    }
 }
 
 // --- TRUE ENDING ---
@@ -929,6 +1167,9 @@ function showTrueEnding() {
     document.getElementById("ending-ngplus-btn").onclick = () => {
         const preserved = {
             hollowKingRewards: { ...state.hollowKingRewards },
+            paleLibrarianRewards: { ...state.paleLibrarianRewards },
+            paleLibrarianDefeated: state.paleLibrarianDefeated,
+            upgradeCostModifier: state.upgradeCostModifier,
             knowledgePerClick: state.knowledgePerClick,
             prestige: { count: 0, bonus: state.prestige.bonus, threshold: 25000 },
             baselineKps: state.baselineKps,
@@ -982,17 +1223,25 @@ function renderStats() {
         ? `${sessionHours}h ${sessionMinutes % 60}m`
         : sessionMinutes > 0 ? `${sessionMinutes}m ${sessionSeconds % 60}s` : `${sessionSeconds}s`;
 
-    const rewardsList = [
+    const hollowRewardsList = [
         state.hollowKingRewards.codex ? "The Forbidden Codex" : null,
         state.hollowKingRewards.mark ? "The Archivist's Mark" : null,
         state.hollowKingRewards.gift ? "The Hollow Gift" : null
+    ].filter(Boolean);
+
+    const paleRewardsList = [
+        state.paleLibrarianRewards.paleGift ? "The Pale Gift" : null,
+        state.paleLibrarianRewards.stillArchive ? "The Still Archive" : null,
+        state.paleLibrarianRewards.whitePage ? "The White Page" : null
     ].filter(Boolean);
 
     panel.innerHTML = `
         <div class="stats-row"><span>Fragments recovered (lifetime)</span><span>${formatNumber(state.stats.totalFragmentsEver)}</span></div>
         <div class="stats-row"><span>Descents completed</span><span>${state.stats.totalDescents}</span></div>
         <div class="stats-row"><span>Hollow King defeats</span><span>${state.stats.hollowKingDefeats}</span></div>
-        <div class="stats-row"><span>Rewards claimed</span><span>${rewardsList.length > 0 ? rewardsList.join(", ") : "None"}</span></div>
+        <div class="stats-row"><span>Pale Librarian defeats</span><span>${state.stats.paleLibrarianDefeats}</span></div>
+        <div class="stats-row"><span>Hollow King rewards</span><span>${hollowRewardsList.length > 0 ? hollowRewardsList.join(", ") : "None"}</span></div>
+        <div class="stats-row"><span>Pale Librarian rewards</span><span>${paleRewardsList.length > 0 ? paleRewardsList.join(", ") : "None"}</span></div>
         <div class="stats-row"><span>Total clicks</span><span>${formatNumber(state.totalClicks)}</span></div>
         <div class="stats-row"><span>Daily bonuses claimed</span><span>${state.totalDailyBonuses}</span></div>
         <div class="stats-row"><span>Achievements</span><span>${state.achievementsUnlocked.size} / ${achievementDefs.length}</span></div>
@@ -1030,12 +1279,16 @@ function saveGame() {
         upgrades: state.upgrades,
         prestige: state.prestige,
         hollowKingRewards: state.hollowKingRewards,
+        paleLibrarianRewards: state.paleLibrarianRewards,
         ritualAvailable: state.ritualAvailable,
         ritualAttempted: state.ritualAttempted,
         banishmentReached: state.banishmentReached,
+        paleLibrarianAvailable: state.paleLibrarianAvailable,
+        paleLibrarianDefeated: state.paleLibrarianDefeated,
         endingSeen: state.endingSeen,
         ngPlus: state.ngPlus,
         baselineKps: state.baselineKps,
+        upgradeCostModifier: state.upgradeCostModifier,
         loreLog: state.loreLog,
         totalClicks: state.totalClicks,
         totalDailyBonuses: state.totalDailyBonuses,
@@ -1055,6 +1308,9 @@ function loadGame() {
         try {
             const preserved = JSON.parse(preservedRaw);
             state.hollowKingRewards = preserved.hollowKingRewards || state.hollowKingRewards;
+            state.paleLibrarianRewards = preserved.paleLibrarianRewards || state.paleLibrarianRewards;
+            state.paleLibrarianDefeated = preserved.paleLibrarianDefeated || false;
+            state.upgradeCostModifier = preserved.upgradeCostModifier || 1.0;
             state.knowledgePerClick = preserved.knowledgePerClick || 1;
             state.prestige = preserved.prestige || state.prestige;
             state.baselineKps = preserved.baselineKps || 0;
@@ -1077,12 +1333,16 @@ function loadGame() {
         state.totalEarned = saved.totalEarned || 0;
         state.prestige = saved.prestige || state.prestige;
         state.hollowKingRewards = saved.hollowKingRewards || state.hollowKingRewards;
+        state.paleLibrarianRewards = saved.paleLibrarianRewards || state.paleLibrarianRewards;
         state.ritualAvailable = saved.ritualAvailable || false;
         state.ritualAttempted = saved.ritualAttempted || false;
         state.banishmentReached = saved.banishmentReached || false;
+        state.paleLibrarianAvailable = saved.paleLibrarianAvailable || false;
+        state.paleLibrarianDefeated = saved.paleLibrarianDefeated || false;
         state.endingSeen = saved.endingSeen || false;
         state.ngPlus = saved.ngPlus || false;
         state.baselineKps = saved.baselineKps || 0;
+        state.upgradeCostModifier = saved.upgradeCostModifier || 1.0;
         state.loreLog = saved.loreLog || [];
         state.totalClicks = saved.totalClicks || 0;
         state.totalDailyBonuses = saved.totalDailyBonuses || 0;
@@ -1096,6 +1356,7 @@ function loadGame() {
             state.stats.totalFragmentsEver = saved.stats.totalFragmentsEver || 0;
             state.stats.totalDescents = saved.stats.totalDescents || 0;
             state.stats.hollowKingDefeats = saved.stats.hollowKingDefeats || 0;
+            state.stats.paleLibrarianDefeats = saved.stats.paleLibrarianDefeats || 0;
         }
         state.stats.sessionStart = Date.now();
 
@@ -1109,7 +1370,6 @@ function loadGame() {
             saved.milestonesReached.forEach(m => milestonesReached.add(m));
         }
 
-        soundEnabled = localStorage.getItem("archivist_sound") === "1";
         recalculateKps();
     } catch (err) {
         console.log("Save data corrupted, starting fresh:", err);
@@ -1147,15 +1407,6 @@ function confirmReset() {
         indicator.style.color = "";
         indicator.onclick = null;
     }, 5000);
-}
-
-// --- SOUND TOGGLE ---
-function toggleSound() {
-    soundEnabled = !soundEnabled;
-    const btn = document.getElementById("sound-btn");
-    if (btn) btn.textContent = soundEnabled ? "Sound: On" : "Sound: Off";
-    if (soundEnabled && audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-    localStorage.setItem("archivist_sound", soundEnabled ? "1" : "0");
 }
 
 // --- AUTOSAVE ---
