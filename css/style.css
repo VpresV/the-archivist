@@ -1382,19 +1382,3 @@ body {
     }
 }
 
-@media (min-width: 769px) {
-    /* On desktop, panels open beside the center, not over it */
-    body.left-open #game-container {
-        margin-left: var(--panel-width);
-        transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    body.right-open #game-container {
-        margin-right: var(--panel-width);
-        transition: margin-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    #game-container {
-        transition: margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-}
