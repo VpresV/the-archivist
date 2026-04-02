@@ -22,7 +22,6 @@
     --pale-border: #2a4a5a;
     --pale-bg: #080e14;
     --panel-width: 300px;
-    --panel-bg: #09070200;
 }
 
 * {
@@ -48,14 +47,12 @@ body {
    THREE-ZONE LAYOUT
    ============================================================ */
 
-/* Side panels — fixed, full height, slide in from sides */
 .side-panel {
     position: fixed;
     top: 0;
     height: 100vh;
     width: var(--panel-width);
     background: linear-gradient(180deg, #0d0800 0%, #080500 100%);
-    border-color: var(--border);
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -135,7 +132,7 @@ body {
     background: var(--border);
 }
 
-/* Center column */
+/* Center column — fixed width, always centered */
 #game-container {
     min-height: 100vh;
     display: flex;
@@ -149,7 +146,6 @@ body {
     z-index: 1;
 }
 
-/* Backdrop for mobile panel overlay */
 #panel-backdrop {
     display: none;
     position: fixed;
@@ -252,6 +248,7 @@ body {
     text-align: center;
 }
 
+/* Status indicators — mark pulses, NG+ pulses, pale pulses */
 #mark-indicator {
     font-family: 'Crimson Text', serif;
     font-size: 0.8rem;
@@ -259,7 +256,7 @@ body {
     letter-spacing: 3px;
     text-align: center;
     font-style: italic;
-    opacity: 0.8;
+    animation: pulse-gentle 4s infinite;
 }
 
 #ngplus-indicator {
@@ -279,7 +276,7 @@ body {
     letter-spacing: 3px;
     text-align: center;
     font-style: italic;
-    opacity: 0.7;
+    animation: pulse-pale 5s infinite;
 }
 
 #knowledge-display {
@@ -297,11 +294,10 @@ body {
 
 #per-second {
     font-size: 0.9rem;
-    color: var(--gold-deeper, #4a3010);
+    color: #4a3010;
     letter-spacing: 1px;
     font-style: italic;
     text-align: center;
-    color: #4a3010;
 }
 
 #daily-bonus-timer {
@@ -352,6 +348,14 @@ body {
     transform: translateY(-1px);
 }
 
+/* Confirming state — turns amber to signal caution */
+#floating-prestige-btn.confirming {
+    background: linear-gradient(145deg, #1a0f00, #2d1800);
+    color: var(--gold);
+    border-color: var(--gold-deep);
+    box-shadow: 0 0 15px rgba(200, 150, 50, 0.2);
+}
+
 #floating-ritual-btn {
     background: linear-gradient(145deg, #0a001a, #1a0030);
     color: var(--purple);
@@ -394,22 +398,28 @@ body {
     transform: translateY(-1px);
 }
 
-#floating-ritual-hint,
+/* Floating hints — fade in slowly for atmospheric dread */
+#floating-ritual-hint {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.85rem;
+    font-style: italic;
+    letter-spacing: 2px;
+    text-align: center;
+    color: #8a3a3a;
+    animation: pulse 2s infinite;
+    opacity: 0;
+    animation: fadeInPulse 3s ease forwards;
+}
+
 #floating-pale-hint {
     font-family: 'Crimson Text', serif;
     font-size: 0.85rem;
     font-style: italic;
     letter-spacing: 2px;
     text-align: center;
-    animation: pulse 2s infinite;
-}
-
-#floating-ritual-hint {
-    color: #8a3a3a;
-}
-
-#floating-pale-hint {
     color: #6a8a9a;
+    opacity: 0;
+    animation: fadeInPulse 4s ease forwards;
 }
 
 /* ============================================================
@@ -426,7 +436,8 @@ body {
     padding-top: 0;
     padding-bottom: 0;
     overflow: hidden;
-    transition: opacity 1.2s ease, max-height 1.2s ease, padding 1.2s ease;
+    /* Slow fade-out matches the slow fade-in for full atmosphere */
+    transition: opacity 2s ease, max-height 1.2s ease, padding 1.2s ease;
     pointer-events: none;
 }
 
@@ -436,6 +447,8 @@ body {
     padding-top: 18px;
     padding-bottom: 18px;
     pointer-events: auto;
+    /* Faster fade-in than fade-out */
+    transition: opacity 1.2s ease, max-height 1.2s ease, padding 1.2s ease;
 }
 
 #lore-title {
@@ -550,7 +563,7 @@ body {
 }
 
 /* ============================================================
-   UPGRADE CARDS (inside left panel)
+   UPGRADE CARDS (left panel)
    ============================================================ */
 
 #upgrade-container {
@@ -742,7 +755,6 @@ body {
     opacity: 1;
 }
 
-/* Right panel action buttons */
 #prestige-btn {
     background: linear-gradient(145deg, #1a0000, #2d0a00);
     color: var(--red);
@@ -821,7 +833,6 @@ body {
     color: var(--red);
 }
 
-/* Panel section toggles */
 .panel-section-toggle {
     background: transparent;
     color: var(--gold-deepest);
@@ -872,7 +883,7 @@ body {
     color: #8a3a3a !important;
 }
 
-/* Lore archive inside panel */
+/* Lore archive */
 #lore-archive-panel {
     max-height: 280px;
     overflow-y: auto;
@@ -909,7 +920,7 @@ body {
     padding: 10px 0;
 }
 
-/* Achievements inside panel */
+/* Achievements */
 .achievements-summary {
     font-family: 'Crimson Text', serif;
     font-size: 0.75rem;
@@ -1300,7 +1311,7 @@ body {
 
 .ending-text {
     font-size: 1.05rem !important;
-    color: var(--gold-deeper, #6b5030) !important;
+    color: #6b5030 !important;
     line-height: 2.1 !important;
 }
 
@@ -1336,6 +1347,26 @@ body {
 @keyframes pulse {
     0%, 100% { opacity: 0.6; }
     50% { opacity: 1; }
+}
+
+/* Gentle pulse for the mark indicator — more subtle than NG+ */
+@keyframes pulse-gentle {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* Cold slow pulse for the Pale Librarian indicator */
+@keyframes pulse-pale {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.85; }
+}
+
+/* Fade in then pulse — for atmospheric hints */
+@keyframes fadeInPulse {
+    0% { opacity: 0; }
+    30% { opacity: 0.8; }
+    65% { opacity: 0.4; }
+    100% { opacity: 0.7; }
 }
 
 /* ============================================================
@@ -1384,4 +1415,3 @@ body {
         max-width: 220px;
     }
 }
-
