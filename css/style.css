@@ -505,6 +505,7 @@ body {
 
 #how-to-play {
     width: 100%;
+    max-width: 420px;
     text-align: center;
 }
 
@@ -532,6 +533,8 @@ body {
     flex-direction: column;
     gap: 8px;
     text-align: left;
+    max-width: 420px;
+    width: 100%;
 }
 
 #htp-content p {
