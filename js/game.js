@@ -585,7 +585,9 @@ function renderPrestige() {
         const prestigeBtn = document.getElementById("prestige-btn");
         const ritualBtn = document.getElementById("ritual-btn");
         const paleBtn = document.getElementById("pale-librarian-btn");
-
+        const feedbackBtn = document.getElementById("feedback-btn");
+        
+        if (feedbackBtn) feedbackBtn.onclick = showFeedbackOverlay;
         if (saveBtn) saveBtn.onclick = saveGame;
         if (resetBtn) resetBtn.onclick = confirmReset;
         if (kofiBtn) kofiBtn.onclick = showSupportOverlay;
@@ -1698,6 +1700,83 @@ function showDailyBonusTimer() {
 function removeDailyBonusTimer() {
     const timer = document.getElementById("daily-bonus-timer");
     if (timer) timer.remove();
+}
+
+// --- FEEDBACK OVERLAY ---
+function showFeedbackOverlay() {
+    removeOverlay("feedback-overlay");
+
+    const overlay = document.createElement("div");
+    overlay.id = "feedback-overlay";
+    overlay.className = "overlay-screen";
+    overlay.innerHTML = `
+        <div class="overlay-box">
+            <div class="overlay-title">Speak to the Archive</div>
+            <div class="overlay-text">
+                The archive listens. Leave a mark — a word of trouble,
+                a whisper of suggestion, or simply something you needed to say.<br><br>
+                <em>Every message reaches the Archivist.</em>
+            </div>
+            <form id="feedback-form" action="https://formspree.io/f/xeeplkvk" method="POST">
+                <div class="feedback-field">
+                    <select name="type" class="feedback-input" required>
+                        <option value="" disabled selected>What brings you here?</option>
+                        <option value="Bug Report">Something is broken</option>
+                        <option value="Feature Suggestion">I have a suggestion</option>
+                        <option value="General Feedback">I just want to say something</option>
+                    </select>
+                </div>
+                <div class="feedback-field">
+                    <textarea name="message" class="feedback-input feedback-textarea"
+                        placeholder="Write here..." required maxlength="1000"></textarea>
+                </div>
+                <div class="feedback-field">
+                    <input type="email" name="email" class="feedback-input"
+                        placeholder="Your email (optional — if you want a reply)" />
+                </div>
+                <input type="hidden" name="descent_level" value="${state.prestige.count}" />
+                <input type="hidden" name="ng_plus" value="${state.ngPlus}" />
+                <div class="overlay-buttons">
+                    <button type="submit" id="feedback-submit-btn">Leave a Mark</button>
+                    <button type="button" id="feedback-cancel-btn">Return to the Archive</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    fadeIn(overlay);
+
+    document.getElementById("feedback-cancel-btn").onclick = () => removeOverlay("feedback-overlay");
+
+    document.getElementById("feedback-form").onsubmit = async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = document.getElementById("feedback-submit-btn");
+        submitBtn.textContent = "Sending...";
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: { "Accept": "application/json" }
+            });
+
+            if (response.ok) {
+                removeOverlay("feedback-overlay");
+                setTimeout(() => {
+                    showLore("The Archive Receives", "Your mark has been left. The Archivist will read it in the quiet hours between descents. Thank you for speaking.");
+                }, 400);
+            } else {
+                submitBtn.textContent = "Something went wrong. Try again.";
+                submitBtn.disabled = false;
+            }
+        } catch (err) {
+            submitBtn.textContent = "Could not reach the archive. Try again.";
+            submitBtn.disabled = false;
+        }
+    };
 }
 
 // --- INIT ---
