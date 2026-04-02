@@ -149,7 +149,6 @@ function formatNumber(n) {
 }
 
 // --- TIMER FORMATTER ---
-// Converts seconds to human-readable "Xm Ys" format.
 function formatTimer(seconds) {
     if (seconds >= 3600) {
         const h = Math.floor(seconds / 3600);
@@ -262,10 +261,7 @@ function processAchievementQueue() {
     `;
 
     document.body.appendChild(el);
-
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => { el.classList.add("visible"); });
-    });
+    requestAnimationFrame(() => { requestAnimationFrame(() => { el.classList.add("visible"); }); });
 
     setTimeout(() => {
         el.classList.remove("visible");
@@ -344,6 +340,36 @@ function updateDisplay() {
     renderPrestige();
     renderFloatingActions();
     renderStatusIndicator();
+    updateTitleGlow();
+}
+
+// --- PRESTIGE TITLE GLOW ---
+// The title changes visual intensity based on descent level — subtle at first,
+// increasingly dramatic as the player descends deeper.
+function updateTitleGlow() {
+    const title = document.getElementById("game-title");
+    if (!title) return;
+
+    const count = state.prestige.count;
+
+    // Remove all existing prestige classes.
+    title.className = "";
+
+    if (count === 0) {
+        title.className = "title-descent-0";
+    } else if (count < 3) {
+        title.className = "title-descent-1";
+    } else if (count < 6) {
+        title.className = "title-descent-2";
+    } else if (count < 9) {
+        title.className = "title-descent-3";
+    } else if (count < 12) {
+        title.className = "title-descent-4";
+    } else {
+        title.className = "title-descent-5";
+    }
+
+    if (state.ngPlus) title.classList.add("title-ngplus");
 }
 
 // --- UPGRADE COST CALCULATOR ---
@@ -423,7 +449,6 @@ function renderUpgrades() {
 }
 
 // --- MILESTONE CHECKER ---
-// Extended to higher values so late-game players continue receiving lore.
 const milestonesReached = new Set();
 const milestones = [10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 10000000, 100000000, 1000000000];
 
@@ -450,12 +475,8 @@ function showLore(title, text) {
     document.getElementById("lore-title").textContent = cleanTitle;
     document.getElementById("lore-text").textContent = cleanText;
 
-    // Fade in.
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => { panel.classList.add("visible"); });
-    });
+    requestAnimationFrame(() => { requestAnimationFrame(() => { panel.classList.add("visible"); }); });
 
-    // Fade out slowly after 12 seconds — the CSS handles the slow fade.
     clearTimeout(panel._fadeTimeout);
     panel._fadeTimeout = setTimeout(() => panel.classList.remove("visible"), 12000);
 
@@ -478,7 +499,6 @@ async function triggerLoreEvent(milestone) {
 }
 
 // --- FLOATING ACTIONS RENDERER ---
-// Renders Descend / Ritual / Pale Librarian in the center column — always visible.
 function renderFloatingActions() {
     const container = document.getElementById("floating-actions");
     if (!container) return;
@@ -529,23 +549,19 @@ function renderFloatingActions() {
 }
 
 // --- PRESTIGE CONFIRMATION ---
-// Two-step confirmation to prevent accidental descent.
 function confirmPrestige() {
     const btn = document.getElementById("floating-prestige-btn");
     if (!btn) return;
 
     if (btn.dataset.confirming === "true") {
-        // Second click — execute.
         doPrestige();
         return;
     }
 
-    // First click — ask for confirmation.
     btn.dataset.confirming = "true";
     btn.textContent = "Are you sure? Click again to descend.";
     btn.classList.add("confirming");
 
-    // Reset after 4 seconds if no second click.
     setTimeout(() => {
         if (btn && btn.dataset.confirming === "true") {
             btn.dataset.confirming = "false";
@@ -556,7 +572,7 @@ function confirmPrestige() {
     }, 4000);
 }
 
-// --- PRESTIGE RENDERER (right panel) ---
+// --- PRESTIGE RENDERER ---
 let prestigeBuilt = false;
 
 function renderPrestige() {
@@ -582,15 +598,17 @@ function renderPrestige() {
         const saveBtn = document.getElementById("save-btn");
         const resetBtn = document.getElementById("reset-btn");
         const kofiBtn = document.getElementById("kofi-btn");
+        const feedbackBtn = document.getElementById("feedback-btn");
+        const shareBtn = document.getElementById("share-btn");
         const prestigeBtn = document.getElementById("prestige-btn");
         const ritualBtn = document.getElementById("ritual-btn");
         const paleBtn = document.getElementById("pale-librarian-btn");
-        const feedbackBtn = document.getElementById("feedback-btn");
-        
-        if (feedbackBtn) feedbackBtn.onclick = showFeedbackOverlay;
+
         if (saveBtn) saveBtn.onclick = saveGame;
         if (resetBtn) resetBtn.onclick = confirmReset;
         if (kofiBtn) kofiBtn.onclick = showSupportOverlay;
+        if (feedbackBtn) feedbackBtn.onclick = showFeedbackOverlay;
+        if (shareBtn) shareBtn.onclick = showShareOverlay;
         if (prestigeBtn) prestigeBtn.onclick = confirmPrestige;
         if (ritualBtn) ritualBtn.onclick = showRitualOverlay;
         if (paleBtn) paleBtn.onclick = showPaleLibrarianWarning;
@@ -634,7 +652,6 @@ function doPrestige() {
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
 
-    // Show atmospheric message before clearing lore log.
     if (state.loreLog.length > 0) {
         setTimeout(() => {
             showLore("The Archive Clears Its Memory", "What was written here is gone now. The archive does not mourn. It only waits for what comes next.");
@@ -695,6 +712,167 @@ async function triggerPrestigeLore(descentLevel) {
     } catch (err) {
         console.log("Prestige lore generation failed:", err);
     }
+}
+
+// --- OFFLINE PROGRESS ---
+// Calculates fragments earned while the player was away and shows an atmospheric message.
+function checkOfflineProgress() {
+    const lastSaved = localStorage.getItem("archivist_last_saved");
+    if (!lastSaved) return;
+
+    const secondsAway = Math.floor((Date.now() - parseInt(lastSaved)) / 1000);
+
+    // Only show if away for more than 2 minutes and has passive income.
+    const kps = state.knowledgePerSecond + state.baselineKps;
+    if (secondsAway < 120 || kps <= 0) return;
+
+    // Cap offline progress at 8 hours to prevent absurd numbers.
+    const cappedSeconds = Math.min(secondsAway, 28800);
+    const earned = Math.floor(kps * state.prestige.bonus * cappedSeconds);
+
+    if (earned <= 0) return;
+
+    state.knowledge += earned;
+    state.totalEarned += earned;
+    state.stats.totalFragmentsEver += earned;
+
+    const timeAway = formatTimer(secondsAway);
+
+    setTimeout(() => {
+        showLore(
+            "The Archive Did Not Sleep",
+            `You were gone for ${timeAway}. The scholars continued without you — recovering ${formatNumber(earned)} fragments from the depths while you were away. The archive does not wait. It only accumulates.`
+        );
+    }, 1200);
+}
+
+// --- SHARE OVERLAY ---
+function showShareOverlay() {
+    removeOverlay("share-overlay");
+
+    const count = state.prestige.count;
+    const ng = state.ngPlus ? " (New Game+)" : "";
+    const fragments = formatNumber(state.stats.totalFragmentsEver);
+
+    const tweetText = count === 0
+        ? `I am descending into The Archivist — a dark idle game where the archive watches back. Play free: https://vpresv.github.io/the-archivist`
+        : `I have descended ${count} time${count !== 1 ? "s" : ""}${ng} into The Archivist, recovering ${fragments} fragments from the dark. How deep will you go? https://vpresv.github.io/the-archivist #TheArchivist`;
+
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+
+    const overlay = document.createElement("div");
+    overlay.id = "share-overlay";
+    overlay.className = "overlay-screen";
+    overlay.innerHTML = `
+        <div class="overlay-box">
+            <div class="overlay-title">Leave a Mark on the World</div>
+            <div class="overlay-text">
+                ${count === 0
+                    ? "The archive is new to you. Tell others it exists.<br><br>"
+                    : `You have descended <em>${count} time${count !== 1 ? "s" : ""}</em> and recovered <em>${fragments} fragments</em>. That is worth saying out loud.<br><br>`
+                }
+                <em>Let the world know what waits in the dark.</em>
+            </div>
+            <div class="share-text-preview">${tweetText}</div>
+            <div class="overlay-buttons">
+                <a href="${twitterUrl}" target="_blank" id="share-twitter-btn">Share on X / Twitter</a>
+                <button id="share-copy-btn">Copy to Clipboard</button>
+                <button id="share-cancel-btn">Return to the Archive</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    fadeIn(overlay);
+
+    document.getElementById("share-copy-btn").onclick = () => {
+        navigator.clipboard.writeText(tweetText).then(() => {
+            const btn = document.getElementById("share-copy-btn");
+            if (btn) {
+                btn.textContent = "Copied.";
+                setTimeout(() => { if (btn) btn.textContent = "Copy to Clipboard"; }, 2000);
+            }
+        });
+    };
+
+    document.getElementById("share-cancel-btn").onclick = () => removeOverlay("share-overlay");
+}
+
+// --- FEEDBACK OVERLAY ---
+function showFeedbackOverlay() {
+    removeOverlay("feedback-overlay");
+
+    const overlay = document.createElement("div");
+    overlay.id = "feedback-overlay";
+    overlay.className = "overlay-screen";
+    overlay.innerHTML = `
+        <div class="overlay-box">
+            <div class="overlay-title">Speak to the Archive</div>
+            <div class="overlay-text">
+                The archive listens. Leave a mark — a word of trouble,
+                a whisper of suggestion, or simply something you needed to say.<br><br>
+                <em>Every message reaches the Archivist.</em>
+            </div>
+            <form id="feedback-form" action="https://formspree.io/f/xeeplkvk" method="POST">
+                <div class="feedback-field">
+                    <select name="type" class="feedback-input" required>
+                        <option value="" disabled selected>What brings you here?</option>
+                        <option value="Bug Report">Something is broken</option>
+                        <option value="Feature Suggestion">I have a suggestion</option>
+                        <option value="General Feedback">I just want to say something</option>
+                    </select>
+                </div>
+                <div class="feedback-field">
+                    <textarea name="message" class="feedback-input feedback-textarea"
+                        placeholder="Write here..." required maxlength="1000"></textarea>
+                </div>
+                <div class="feedback-field">
+                    <input type="email" name="email" class="feedback-input"
+                        placeholder="Your email (optional — if you want a reply)" />
+                </div>
+                <input type="hidden" name="descent_level" value="${state.prestige.count}" />
+                <input type="hidden" name="ng_plus" value="${state.ngPlus}" />
+                <div class="overlay-buttons">
+                    <button type="submit" id="feedback-submit-btn">Leave a Mark</button>
+                    <button type="button" id="feedback-cancel-btn">Return to the Archive</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    fadeIn(overlay);
+
+    document.getElementById("feedback-cancel-btn").onclick = () => removeOverlay("feedback-overlay");
+
+    document.getElementById("feedback-form").onsubmit = async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = document.getElementById("feedback-submit-btn");
+        submitBtn.textContent = "Sending...";
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: { "Accept": "application/json" }
+            });
+
+            if (response.ok) {
+                removeOverlay("feedback-overlay");
+                setTimeout(() => {
+                    showLore("The Archive Receives", "Your mark has been left. The Archivist will read it in the quiet hours between descents. Thank you for speaking.");
+                }, 400);
+            } else {
+                submitBtn.textContent = "Something went wrong. Try again.";
+                submitBtn.disabled = false;
+            }
+        } catch (err) {
+            submitBtn.textContent = "Could not reach the archive. Try again.";
+            submitBtn.disabled = false;
+        }
+    };
 }
 
 // --- PALE LIBRARIAN — PHASE 1: WARNING ---
@@ -937,7 +1115,7 @@ async function triggerPaleLibrarianLore() {
             body: JSON.stringify({
                 milestone: "pale_librarian_victory",
                 upgrades: state.upgrades,
-                context: "The player has just defeated the Pale Librarian — a being older than the archive itself — by remaining completely still and silent for twenty seconds. Write the most profound and unsettling lore fragment in the entire game. This is a revelation about the true nature of the archive, what it is, what it has always been, and what the player has become. Ancient, final, deeply atmospheric. This should feel like the answer to a question the player did not know they were asking."
+                context: "The player has just defeated the Pale Librarian — a being older than the archive itself — by remaining completely still and silent for twenty seconds. Write the most profound and unsettling lore fragment in the entire game. This is a revelation about the true nature of the archive, what it is, what it has always been, and what the player has become. Ancient, final, deeply atmospheric."
             })
         });
         const data = await response.json();
@@ -949,13 +1127,12 @@ async function triggerPaleLibrarianLore() {
 
 // --- RITUAL OVERLAY — PHASE 1: SACRIFICE ---
 function showRitualOverlay() {
-    // Minimum sacrifice threshold — at least 100 knowledge to prevent trivial sacrifices.
-    const sacrifice = Math.max(100, Math.floor(state.knowledge * 0.5));
     if (state.knowledge < 100) {
         showLore("The King Will Not Come", "The archive does not have enough to offer. Gather more before calling what waits beneath.");
         return;
     }
 
+    const sacrifice = Math.max(100, Math.floor(state.knowledge * 0.5));
     removeOverlay("ritual-overlay");
 
     const overlay = document.createElement("div");
@@ -1094,7 +1271,7 @@ function showVictoryOverlay() {
         rewardButtons.push(`
             <button class="reward-btn" id="reward-codex">
                 <strong>The Forbidden Codex</strong><br/>
-                <small>${state.ngPlus ? "A final page surfaces. Some truths cannot be unlearned. The archive whispers constantly now." : "A final page surfaces from the deepest vault. Some truths cannot be unlearned."}</small>
+                <small>${state.ngPlus ? "A final page surfaces. Some truths cannot be unlearned." : "A final page surfaces from the deepest vault. Some truths cannot be unlearned."}</small>
             </button>
         `);
     }
@@ -1102,7 +1279,7 @@ function showVictoryOverlay() {
         rewardButtons.push(`
             <button class="reward-btn" id="reward-mark">
                 <strong>The Archivist's Mark</strong><br/>
-                <small>${state.ngPlus ? "Your name is written deeper this time. Each fragment carries twice the weight." : "Your name is written in the archive's oldest ink. It will not fade. Each fragment you recover carries more weight."}</small>
+                <small>${state.ngPlus ? "Your name is written deeper this time." : "Your name is written in the archive's oldest ink. It will not fade."}</small>
             </button>
         `);
     }
@@ -1110,7 +1287,7 @@ function showVictoryOverlay() {
         rewardButtons.push(`
             <button class="reward-btn" id="reward-gift">
                 <strong>The Hollow Gift</strong><br/>
-                <small>${state.ngPlus ? "The King left more of himself this time. Far more. The fragments come faster than they should." : "Something of the King remains in you. The fragments come faster now."}</small>
+                <small>${state.ngPlus ? "The King left more of himself this time." : "Something of the King remains in you. The fragments come faster now."}</small>
             </button>
         `);
     }
@@ -1122,12 +1299,9 @@ function showVictoryOverlay() {
         <div class="overlay-box">
             <div class="overlay-title">The Hollow King Retreats</div>
             <div class="overlay-text">
-                The darkness folded inward. The King — that vast, hollow thing that had watched
-                from beneath every page, behind every word you ever recovered — has been driven
-                back into the deep.<br><br>
-                He did not scream. He did not rage. He simply... withdrew. As if he had been
-                waiting for someone strong enough to push back.<br><br>
-                As he retreated, he left something behind. A gift. Or a payment. Perhaps both.<br><br>
+                The darkness folded inward. The King has been driven back into the deep.<br><br>
+                He did not scream. He did not rage. He simply... withdrew.<br><br>
+                As he retreated, he left something behind.<br><br>
                 <em>Choose what he left for you.</em>
             </div>
             <div id="reward-buttons-container">
@@ -1180,14 +1354,14 @@ function claimReward(rewardId) {
         } else if (rewardId === "mark") {
             showLore("The Archivist's Mark",
                 state.ngPlus
-                    ? "The second mark burns deeper than the first. Your name is now written in two inks — one ancient, one something else entirely. The fragments feel heavier now. More real."
-                    : "Your name has been written in ink older than language. The archive will not forget you. Something in the dark nods slowly, as if satisfied."
+                    ? "The second mark burns deeper than the first. Your name is now written in two inks — one ancient, one something else entirely."
+                    : "Your name has been written in ink older than language. The archive will not forget you."
             );
         } else if (rewardId === "gift") {
             showLore("The Hollow Gift",
                 state.ngPlus
-                    ? "He left far more of himself this time. It doesn't settle behind your eyes — it settles everywhere. The archive and you are no longer separate things."
-                    : "The King left a splinter of himself behind. It settled somewhere behind your eyes. The fragments come faster now — as if they were always yours to begin with."
+                    ? "He left far more of himself this time. The archive and you are no longer separate things."
+                    : "The King left a splinter of himself behind. The fragments come faster now — as if they were always yours to begin with."
             );
         }
     }, 400);
@@ -1203,8 +1377,8 @@ async function triggerCodexLore() {
                 milestone: "hollow_king_codex",
                 upgrades: state.upgrades,
                 context: state.ngPlus
-                    ? "The player has defeated the Hollow King in New Game+ and claimed the Forbidden Codex for the second time. Write something that suggests the archive was never truly closed — that the first ending was itself a page in a larger book. Deeply unsettling, ancient, final in a different way."
-                    : "The player has just defeated the Hollow King and claimed the Forbidden Codex. Write the darkest, most profound lore fragment in the entire game. This is a revelation — something that recontextualizes everything that came before. Ancient, unsettling, final."
+                    ? "The player claimed the Forbidden Codex in New Game+. Write something suggesting the archive was never truly closed. Deeply unsettling, ancient, final in a different way."
+                    : "The player claimed the Forbidden Codex. Write the darkest lore fragment — a revelation that recontextualizes everything. Ancient, unsettling, final."
             })
         });
         const data = await response.json();
@@ -1396,6 +1570,9 @@ function renderLoreArchive() {
 
 // --- SAVE SYSTEM ---
 function saveGame() {
+    // Store the current timestamp so offline progress can be calculated on next load.
+    localStorage.setItem("archivist_last_saved", Date.now().toString());
+
     const saveData = {
         knowledge: state.knowledge,
         knowledgePerClick: state.knowledgePerClick,
@@ -1538,7 +1715,6 @@ function confirmReset() {
 setInterval(saveGame, 30000);
 
 // --- CLICK ANIMATION: FLOATING NUMBER ---
-// Adds slight horizontal randomness so rapid clicks don't stack perfectly.
 function spawnFloatNumber(e, amount) {
     const el = document.createElement("div");
     el.className = "float-number";
@@ -1559,9 +1735,7 @@ function spawnRipple(e) {
 
 // --- UTILITY: FADE IN ---
 function fadeIn(el) {
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => { el.classList.add("visible"); });
-    });
+    requestAnimationFrame(() => { requestAnimationFrame(() => { el.classList.add("visible"); }); });
 }
 
 // --- UTILITY: REMOVE OVERLAY ---
@@ -1569,9 +1743,7 @@ function removeOverlay(id) {
     const el = document.getElementById(id);
     if (el) {
         el.classList.remove("visible");
-        setTimeout(() => {
-            if (el.parentNode) el.parentNode.removeChild(el);
-        }, 600);
+        setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
     }
 }
 
@@ -1687,7 +1859,6 @@ function showDailyBonusTimer() {
     }
 
     let secondsLeft = 180;
-    // Use formatTimer for human-readable display.
     timer.textContent = `✦ Daily blessing: ${formatTimer(secondsLeft)} remaining ✦`;
 
     const interval = setInterval(() => {
@@ -1702,85 +1873,9 @@ function removeDailyBonusTimer() {
     if (timer) timer.remove();
 }
 
-// --- FEEDBACK OVERLAY ---
-function showFeedbackOverlay() {
-    removeOverlay("feedback-overlay");
-
-    const overlay = document.createElement("div");
-    overlay.id = "feedback-overlay";
-    overlay.className = "overlay-screen";
-    overlay.innerHTML = `
-        <div class="overlay-box">
-            <div class="overlay-title">Speak to the Archive</div>
-            <div class="overlay-text">
-                The archive listens. Leave a mark — a word of trouble,
-                a whisper of suggestion, or simply something you needed to say.<br><br>
-                <em>Every message reaches the Archivist.</em>
-            </div>
-            <form id="feedback-form" action="https://formspree.io/f/xeeplkvk" method="POST">
-                <div class="feedback-field">
-                    <select name="type" class="feedback-input" required>
-                        <option value="" disabled selected>What brings you here?</option>
-                        <option value="Bug Report">Something is broken</option>
-                        <option value="Feature Suggestion">I have a suggestion</option>
-                        <option value="General Feedback">I just want to say something</option>
-                    </select>
-                </div>
-                <div class="feedback-field">
-                    <textarea name="message" class="feedback-input feedback-textarea"
-                        placeholder="Write here..." required maxlength="1000"></textarea>
-                </div>
-                <div class="feedback-field">
-                    <input type="email" name="email" class="feedback-input"
-                        placeholder="Your email (optional — if you want a reply)" />
-                </div>
-                <input type="hidden" name="descent_level" value="${state.prestige.count}" />
-                <input type="hidden" name="ng_plus" value="${state.ngPlus}" />
-                <div class="overlay-buttons">
-                    <button type="submit" id="feedback-submit-btn">Leave a Mark</button>
-                    <button type="button" id="feedback-cancel-btn">Return to the Archive</button>
-                </div>
-            </form>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-    fadeIn(overlay);
-
-    document.getElementById("feedback-cancel-btn").onclick = () => removeOverlay("feedback-overlay");
-
-    document.getElementById("feedback-form").onsubmit = async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const submitBtn = document.getElementById("feedback-submit-btn");
-        submitBtn.textContent = "Sending...";
-        submitBtn.disabled = true;
-
-        try {
-            const response = await fetch(form.action, {
-                method: "POST",
-                body: new FormData(form),
-                headers: { "Accept": "application/json" }
-            });
-
-            if (response.ok) {
-                removeOverlay("feedback-overlay");
-                setTimeout(() => {
-                    showLore("The Archive Receives", "Your mark has been left. The Archivist will read it in the quiet hours between descents. Thank you for speaking.");
-                }, 400);
-            } else {
-                submitBtn.textContent = "Something went wrong. Try again.";
-                submitBtn.disabled = false;
-            }
-        } catch (err) {
-            submitBtn.textContent = "Could not reach the archive. Try again.";
-            submitBtn.disabled = false;
-        }
-    };
-}
-
 // --- INIT ---
 loadGame();
+checkOfflineProgress();
 checkDailyBonus();
 checkAchievements();
 updateDisplay();
