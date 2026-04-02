@@ -148,6 +148,22 @@ function formatNumber(n) {
     return Math.floor(n).toString();
 }
 
+// --- TIMER FORMATTER ---
+// Converts seconds to human-readable "Xm Ys" format.
+function formatTimer(seconds) {
+    if (seconds >= 3600) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        return `${h}h ${m}m`;
+    }
+    if (seconds >= 60) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}m ${s}s`;
+    }
+    return `${seconds}s`;
+}
+
 // --- PANEL SYSTEM ---
 let leftPanelOpen = false;
 let rightPanelOpen = false;
@@ -162,18 +178,14 @@ function openPanel(side) {
         panel.classList.add("open");
         document.getElementById("toggle-left-panel").classList.add("active");
         document.getElementById("mobile-left-tab").classList.add("active");
-        if (!isMobile) document.body.classList.add("left-open");
     } else {
         rightPanelOpen = true;
         panel.classList.add("open");
         document.getElementById("toggle-right-panel").classList.add("active");
         document.getElementById("mobile-right-tab").classList.add("active");
-        if (!isMobile) document.body.classList.add("right-open");
     }
 
-    if (isMobile) {
-        backdrop.classList.add("visible");
-    }
+    if (isMobile) backdrop.classList.add("visible");
 }
 
 function closePanel(side) {
@@ -185,18 +197,14 @@ function closePanel(side) {
         panel.classList.remove("open");
         document.getElementById("toggle-left-panel").classList.remove("active");
         document.getElementById("mobile-left-tab").classList.remove("active");
-        document.body.classList.remove("left-open");
     } else {
         rightPanelOpen = false;
         panel.classList.remove("open");
         document.getElementById("toggle-right-panel").classList.remove("active");
         document.getElementById("mobile-right-tab").classList.remove("active");
-        document.body.classList.remove("right-open");
     }
 
-    if (!leftPanelOpen && !rightPanelOpen) {
-        backdrop.classList.remove("visible");
-    }
+    if (!leftPanelOpen && !rightPanelOpen) backdrop.classList.remove("visible");
 }
 
 function togglePanel(side) {
@@ -207,15 +215,12 @@ function togglePanel(side) {
     }
 }
 
-// Panel toggle button listeners.
 document.getElementById("toggle-left-panel").onclick = () => togglePanel("left");
 document.getElementById("toggle-right-panel").onclick = () => togglePanel("right");
 document.getElementById("left-panel-close").onclick = () => closePanel("left");
 document.getElementById("right-panel-close").onclick = () => closePanel("right");
 document.getElementById("mobile-left-tab").onclick = () => togglePanel("left");
 document.getElementById("mobile-right-tab").onclick = () => togglePanel("right");
-
-// Close panels on backdrop click.
 document.getElementById("panel-backdrop").onclick = () => {
     closePanel("left");
     closePanel("right");
@@ -378,7 +383,7 @@ function recalculateKps() {
     state.knowledgePerSecond = total;
 }
 
-// --- UPGRADE RENDERER (left panel) ---
+// --- UPGRADE RENDERER ---
 let upgradesBuilt = false;
 
 function renderUpgrades() {
@@ -418,8 +423,9 @@ function renderUpgrades() {
 }
 
 // --- MILESTONE CHECKER ---
+// Extended to higher values so late-game players continue receiving lore.
 const milestonesReached = new Set();
-const milestones = [10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000];
+const milestones = [10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 10000000, 100000000, 1000000000];
 
 function checkMilestones() {
     milestones.forEach(m => {
@@ -444,11 +450,15 @@ function showLore(title, text) {
     document.getElementById("lore-title").textContent = cleanTitle;
     document.getElementById("lore-text").textContent = cleanText;
 
+    // Fade in.
     requestAnimationFrame(() => {
         requestAnimationFrame(() => { panel.classList.add("visible"); });
     });
 
-    setTimeout(() => panel.classList.remove("visible"), 12000);
+    // Fade out slowly after 12 seconds — the CSS handles the slow fade.
+    clearTimeout(panel._fadeTimeout);
+    panel._fadeTimeout = setTimeout(() => panel.classList.remove("visible"), 12000);
+
     checkAchievements();
 }
 
@@ -468,8 +478,7 @@ async function triggerLoreEvent(milestone) {
 }
 
 // --- FLOATING ACTIONS RENDERER ---
-// Renders Descend / Ritual / Pale Librarian buttons in the center column
-// so they are always visible and never buried below upgrades.
+// Renders Descend / Ritual / Pale Librarian in the center column — always visible.
 function renderFloatingActions() {
     const container = document.getElementById("floating-actions");
     if (!container) return;
@@ -498,7 +507,7 @@ function renderFloatingActions() {
         const btn = document.createElement("button");
         btn.id = "floating-prestige-btn";
         btn.textContent = `Descend Deeper — next bonus: ${nextBonus}%`;
-        btn.onclick = doPrestige;
+        btn.onclick = confirmPrestige;
         container.appendChild(btn);
     }
 
@@ -519,6 +528,34 @@ function renderFloatingActions() {
     }
 }
 
+// --- PRESTIGE CONFIRMATION ---
+// Two-step confirmation to prevent accidental descent.
+function confirmPrestige() {
+    const btn = document.getElementById("floating-prestige-btn");
+    if (!btn) return;
+
+    if (btn.dataset.confirming === "true") {
+        // Second click — execute.
+        doPrestige();
+        return;
+    }
+
+    // First click — ask for confirmation.
+    btn.dataset.confirming = "true";
+    btn.textContent = "Are you sure? Click again to descend.";
+    btn.classList.add("confirming");
+
+    // Reset after 4 seconds if no second click.
+    setTimeout(() => {
+        if (btn && btn.dataset.confirming === "true") {
+            btn.dataset.confirming = "false";
+            btn.classList.remove("confirming");
+            const nextBonus = ((state.prestige.bonus + 0.5) * 100).toFixed(0);
+            btn.textContent = `Descend Deeper — next bonus: ${nextBonus}%`;
+        }
+    }, 4000);
+}
+
 // --- PRESTIGE RENDERER (right panel) ---
 let prestigeBuilt = false;
 
@@ -526,7 +563,6 @@ function renderPrestige() {
     const { count, bonus, threshold } = state.prestige;
     const nextUnlock = upgradeDefs.find(d => !d.paleLibrarianOnly && d.requiredDescent === count + 1);
 
-    // Update prestige info panel.
     const descentEl = document.getElementById("descent-level");
     const multiplierEl = document.getElementById("knowledge-multiplier");
     if (descentEl) descentEl.textContent = count;
@@ -542,7 +578,6 @@ function renderPrestige() {
         }
     }
 
-    // Build the right panel actions once.
     if (!prestigeBuilt) {
         const saveBtn = document.getElementById("save-btn");
         const resetBtn = document.getElementById("reset-btn");
@@ -554,14 +589,13 @@ function renderPrestige() {
         if (saveBtn) saveBtn.onclick = saveGame;
         if (resetBtn) resetBtn.onclick = confirmReset;
         if (kofiBtn) kofiBtn.onclick = showSupportOverlay;
-        if (prestigeBtn) prestigeBtn.onclick = doPrestige;
+        if (prestigeBtn) prestigeBtn.onclick = confirmPrestige;
         if (ritualBtn) ritualBtn.onclick = showRitualOverlay;
         if (paleBtn) paleBtn.onclick = showPaleLibrarianWarning;
 
         prestigeBuilt = true;
     }
 
-    // Keep right panel buttons in sync (secondary — floating strip is primary).
     const canPrestige = state.knowledge >= threshold;
     const nextBonus = ((bonus + 0.5) * 100).toFixed(0);
 
@@ -597,6 +631,14 @@ function doPrestige() {
     state.knowledgePerClick = state.hollowKingRewards.mark ? (state.ngPlus ? 3 : 2) : 1;
     state.knowledgePerSecond = 0;
     state.totalEarned = 0;
+
+    // Show atmospheric message before clearing lore log.
+    if (state.loreLog.length > 0) {
+        setTimeout(() => {
+            showLore("The Archive Clears Its Memory", "What was written here is gone now. The archive does not mourn. It only waits for what comes next.");
+        }, 800);
+    }
+
     state.loreLog = [];
 
     Object.keys(state.upgrades).forEach(key => {
@@ -905,8 +947,12 @@ async function triggerPaleLibrarianLore() {
 
 // --- RITUAL OVERLAY — PHASE 1: SACRIFICE ---
 function showRitualOverlay() {
-    const sacrifice = Math.floor(state.knowledge * 0.5);
-    if (sacrifice <= 0) return;
+    // Minimum sacrifice threshold — at least 100 knowledge to prevent trivial sacrifices.
+    const sacrifice = Math.max(100, Math.floor(state.knowledge * 0.5));
+    if (state.knowledge < 100) {
+        showLore("The King Will Not Come", "The archive does not have enough to offer. Gather more before calling what waits beneath.");
+        return;
+    }
 
     removeOverlay("ritual-overlay");
 
@@ -1298,11 +1344,7 @@ function renderStats() {
     if (!panel) return;
 
     const sessionSeconds = Math.floor((Date.now() - state.stats.sessionStart) / 1000);
-    const sessionMinutes = Math.floor(sessionSeconds / 60);
-    const sessionHours = Math.floor(sessionMinutes / 60);
-    const timeStr = sessionHours > 0
-        ? `${sessionHours}h ${sessionMinutes % 60}m`
-        : sessionMinutes > 0 ? `${sessionMinutes}m ${sessionSeconds % 60}s` : `${sessionSeconds}s`;
+    const timeStr = formatTimer(sessionSeconds);
 
     const hollowRewardsList = [
         state.hollowKingRewards.codex ? "Codex" : null,
@@ -1494,11 +1536,13 @@ function confirmReset() {
 setInterval(saveGame, 30000);
 
 // --- CLICK ANIMATION: FLOATING NUMBER ---
+// Adds slight horizontal randomness so rapid clicks don't stack perfectly.
 function spawnFloatNumber(e, amount) {
     const el = document.createElement("div");
     el.className = "float-number";
     el.textContent = "+" + formatNumber(Math.floor(amount));
-    el.style.left = (e.clientX - 20) + "px";
+    const jitter = (Math.random() - 0.5) * 30;
+    el.style.left = (e.clientX - 20 + jitter) + "px";
     el.style.top = (e.clientY - 10) + "px";
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 1000);
@@ -1551,7 +1595,7 @@ htpToggle.addEventListener("click", () => {
     }
 });
 
-// --- PANEL SECTION TOGGLES (right panel) ---
+// --- PANEL SECTION TOGGLES ---
 function setupPanelToggle(btnId, panelId, openLabel, closedLabel) {
     const btn = document.getElementById(btnId);
     const panel = document.getElementById(panelId);
@@ -1641,11 +1685,12 @@ function showDailyBonusTimer() {
     }
 
     let secondsLeft = 180;
-    timer.textContent = `✦ Daily blessing: ${secondsLeft}s remaining ✦`;
+    // Use formatTimer for human-readable display.
+    timer.textContent = `✦ Daily blessing: ${formatTimer(secondsLeft)} remaining ✦`;
 
     const interval = setInterval(() => {
         secondsLeft--;
-        if (timer) timer.textContent = `✦ Daily blessing: ${secondsLeft}s remaining ✦`;
+        if (timer) timer.textContent = `✦ Daily blessing: ${formatTimer(secondsLeft)} remaining ✦`;
         if (secondsLeft <= 0) clearInterval(interval);
     }, 1000);
 }
