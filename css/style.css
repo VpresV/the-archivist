@@ -1363,6 +1363,35 @@ body {
    RESPONSIVE
    ============================================================ */
 
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+#site-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 8px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+#site-footer a {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.72rem;
+    color: #2a1808;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.2s ease;
+    pointer-events: auto;
+}
+
+#site-footer a:hover {
+    color: #5a3e1b;
+}
+
 @media (max-width: 768px) {
     .mobile-tab { display: block; }
     #panel-toggles { display: none; }
@@ -1376,4 +1405,45 @@ body {
     #click-btn { padding: 16px 32px; font-size: 1.05rem; }
 
     .achievement-notification { bottom: 70px; right: 12px; max-width: 220px; }
+}
+
+/* ============================================================
+   ABOUT / SEO SECTION
+   ============================================================ */
+
+#about-section {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 40px 24px 100px 24px;
+}
+
+#about-content {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.about-block {
+    border-top: 1px solid #1a0a00;
+    padding-top: 24px;
+}
+
+.about-block h2 {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #4a3418;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.about-block p {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.95rem;
+    color: #5a4028;
+    line-height: 1.85;
+    font-style: italic;
+    margin-bottom: 8px;
 }
